@@ -1,33 +1,54 @@
 ---
 import { invitation } from '../data/invitation';
-import Reveal from './Reveal.astro';
 const { event } = invitation;
 ---
 
-<section class="px-6 py-20 text-center sm:py-28">
-  <Reveal>
-    <p class="text-sm uppercase tracking-[0.3em] text-rose-deep">Falta poco</p>
-    <div
-      id="countdown"
-      data-target={event.datetime}
-      class="mx-auto mt-8 flex max-w-md justify-center gap-4 sm:gap-6"
-    >
-      {['days', 'hours', 'minutes', 'seconds'].map((unit) => (
-        <div class="flex-1 rounded-2xl bg-wine px-2 py-4 text-cream shadow-lg">
-          <span data-unit={unit} class="block font-display text-3xl sm:text-4xl">--</span>
-          <span class="text-xs uppercase tracking-widest text-blush">
-            {{ days: 'días', hours: 'hrs', minutes: 'min', seconds: 'seg' }[unit]}
-          </span>
-        </div>
-      ))}
-    </div>
-    <p id="countdown-done" class="mt-8 hidden font-script text-4xl text-rose-deep">
-      ¡Es hoy! 🍿💕
-    </p>
-  </Reveal>
+<section id="countdown-section" class="px-6 py-20 text-center sm:py-28">
+  <p class="cd-label text-sm uppercase tracking-[0.3em] text-rose-deep">Falta poco</p>
+  <div
+    id="countdown"
+    data-target={event.datetime}
+    class="mx-auto mt-8 flex max-w-md justify-center gap-4 sm:gap-6"
+  >
+    {['days', 'hours', 'minutes', 'seconds'].map((unit) => (
+      <div class="cd-cell flex-1 rounded-2xl bg-wine px-2 py-4 text-cream shadow-lg">
+        <span data-unit={unit} class="block font-display text-3xl sm:text-4xl">--</span>
+        <span class="text-xs uppercase tracking-widest text-blush">
+          {{ days: 'días', hours: 'hrs', minutes: 'min', seconds: 'seg' }[unit]}
+        </span>
+      </div>
+    ))}
+  </div>
+  <p id="countdown-done" class="mt-8 hidden font-script text-4xl text-rose-deep">
+    ¡Es hoy! 🍿💕
+  </p>
 </section>
 
 <script>
+  import { gsap } from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  gsap.registerPlugin(ScrollTrigger);
+
+  // --- Animación de entrada/reversa (GSAP + ScrollTrigger) ---
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // Cajas del contador: fade + subida, en cascada
+    gsap.timeline({
+      scrollTrigger: {
+        trigger: '#countdown-section',
+        start: 'top 80%',
+        end: 'bottom 20%',
+        toggleActions: 'play reverse play reverse',
+      },
+    })
+      .from('#countdown-section .cd-label', { opacity: 0, y: 30, duration: 0.5, ease: 'power2.out' })
+      .from(
+        '#countdown-section .cd-cell',
+        { opacity: 0, y: 60, stagger: 0.12, duration: 0.6, ease: 'back.out(1.6)' },
+        '-=0.2'
+      );
+  }
+
+  // --- Lógica del contador (cuenta regresiva en vivo) ---
   const root = document.getElementById('countdown')!;
   const done = document.getElementById('countdown-done')!;
   const target = new Date(root.dataset.target!).getTime();
