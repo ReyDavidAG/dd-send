@@ -47,6 +47,16 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
   return { message: "Te enviamos un correo para confirmar tu cuenta. Revísalo para continuar." };
 }
 
+export async function signInWithGoogle(): Promise<void> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback` },
+  });
+  if (error) redirect("/login?error=oauth");
+  if (data.url) redirect(data.url); // Supabase → Google → /auth/callback
+}
+
 export async function signOut(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();
