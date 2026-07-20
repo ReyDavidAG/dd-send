@@ -1,5 +1,5 @@
 import { InvitationView } from "./InvitationView";
-import type { Field, InvitationContent, Palette, TemplateDef } from "./types";
+import { DEFAULT_SECTIONS, type Field, type InvitationContent, type Palette, type TemplateDef } from "./types";
 
 // Campos editables comunes a las 3 plantillas del MVP.
 const commonFields = (): Field[] => [
@@ -26,6 +26,7 @@ const pal = (
 ): Palette => ({ key, name, bg, surface, text, accent, accentDeep, band });
 
 const sample = (over: Partial<InvitationContent>): InvitationContent => ({
+  sections: DEFAULT_SECTIONS.map((s) => ({ ...s })),
   title: "Para ti",
   toName: "Denisse",
   fromName: "David",
