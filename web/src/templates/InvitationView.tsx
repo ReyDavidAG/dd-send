@@ -1,0 +1,212 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
+import { useScrollReveal } from "./hooks/useScrollReveal";
+import type { InvitationContent, Palette } from "./types";
+
+// Vista base de invitación (diseño portado de la referencia Astro).
+// Las 3 plantillas del MVP la reutilizan cambiando paleta y textos.
+// ponytail: un solo layout parametrizado por paleta. Si una plantilla necesita
+// una estructura distinta, se le da su propio Component en el registry.
+export function InvitationView({
+  content,
+  palette,
+}: {
+  content: InvitationContent;
+  palette: Palette;
+}) {
+  const scope = useScrollReveal();
+
+  const vars = {
+    "--c-bg": palette.bg,
+    "--c-surface": palette.surface,
+    "--c-text": palette.text,
+    "--c-accent": palette.accent,
+    "--c-accent-deep": palette.accentDeep,
+    "--c-band": palette.band,
+  } as CSSProperties;
+
+  return (
+    <div
+      ref={scope}
+      style={vars}
+      className="min-h-screen bg-[var(--c-bg)] text-[var(--c-text)]"
+    >
+      {/* Hero */}
+      <header className="relative flex h-[85vh] items-center justify-center overflow-hidden text-center">
+        {content.photos[0] && (
+          <img
+            src={content.photos[0]}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        )}
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="relative px-6 text-white drop-shadow-lg">
+          <p className="text-sm uppercase tracking-[0.35em]">{content.title}</p>
+          <h1 className="mt-4 text-5xl font-bold sm:text-7xl">
+            {content.fromName} &amp; {content.toName}
+          </h1>
+        </div>
+      </header>
+
+      {/* Mensaje + fotos */}
+      <section className="px-6 py-20 sm:py-28">
+        <div data-reveal className="mx-auto max-w-xl text-center">
+          <p className="text-3xl text-[var(--c-accent-deep)] sm:text-4xl">{content.title}</p>
+          <p className="mt-8 text-xl leading-relaxed sm:text-2xl">{content.message}</p>
+        </div>
+
+        <div className="mx-auto mt-14 grid max-w-2xl gap-4 sm:grid-cols-3">
+          {content.photos.map((src, i) => (
+            <img
+              key={i}
+              data-reveal
+              data-reveal-y="80"
+              src={src}
+              alt={`Foto ${i + 1}`}
+              loading="lazy"
+              className={`aspect-[3/4] w-full rounded-2xl border-4 border-[var(--c-surface)] object-cover shadow-lg ${
+                i === 1 ? "sm:mt-8" : ""
+              }`}
+            />
+          ))}
+        </div>
+
+        {content.signature && (
+          <p data-reveal className="mt-12 text-center text-2xl text-[var(--c-accent-deep)]">
+            {content.signature}
+          </p>
+        )}
+      </section>
+
+      {/* Detalles */}
+      <section className="bg-[var(--c-band)] px-6 py-20 sm:py-28">
+        <div data-reveal data-reveal-x="-80" className="mx-auto max-w-lg text-center">
+          <p className="text-sm uppercase tracking-[0.3em] text-[var(--c-accent-deep)]">
+            Detalles
+          </p>
+          <dl className="mt-8 space-y-6 text-lg">
+            <div>
+              <dt className="text-2xl text-[var(--c-accent-deep)]">Evento</dt>
+              <dd className="text-2xl">{content.eventName}</dd>
+            </div>
+            <div>
+              <dt className="text-2xl text-[var(--c-accent-deep)]">Cuándo</dt>
+              <dd className="text-2xl">{content.eventDateLabel}</dd>
+            </div>
+          </dl>
+          {content.locationLabel &&
+            (content.locationLink ? (
+              <a
+                href={content.locationLink}
+                target="_blank"
+                rel="noopener"
+                className="mt-10 inline-block rounded-full bg-[var(--c-text)] px-8 py-4 text-lg font-semibold text-[var(--c-bg)] transition hover:bg-[var(--c-accent-deep)]"
+              >
+                {content.locationLabel}
+              </a>
+            ) : (
+              <p className="mt-10 text-2xl text-[var(--c-accent-deep)]">{content.locationLabel}</p>
+            ))}
+        </div>
+      </section>
+
+      <Countdown iso={content.eventDate} />
+      <Rsvp whatsapp={content.rsvpWhatsapp} message={content.rsvpMessage} />
+
+      <footer className="py-10 text-center text-sm opacity-60">
+        Hecho con 💕 · {content.fromName}
+      </footer>
+    </div>
+  );
+}
+
+function Countdown({ iso }: { iso: string }) {
+  const target = iso ? new Date(iso).getTime() : 0;
+  const [left, setLeft] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!target) return;
+    const tick = () => setLeft(target - Date.now());
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [target]);
+
+  if (!target) return null;
+
+  const done = left !== null && left <= 0;
+  const s = Math.max(0, Math.floor((left ?? 0) / 1000));
+  const cells: [string, number][] = [
+    ["días", Math.floor(s / 86400)],
+    ["hrs", Math.floor((s % 86400) / 3600)],
+    ["min", Math.floor((s % 3600) / 60)],
+    ["seg", s % 60],
+  ];
+
+  return (
+    <section className="px-6 py-20 text-center sm:py-28">
+      <p className="text-sm uppercase tracking-[0.3em] text-[var(--c-accent-deep)]">Falta poco</p>
+      {done ? (
+        <p className="mt-8 text-4xl text-[var(--c-accent-deep)]">¡Es hoy! 🎉</p>
+      ) : (
+        <div className="mx-auto mt-8 flex max-w-md justify-center gap-4 sm:gap-6">
+          {cells.map(([label, value]) => (
+            <div
+              key={label}
+              className="flex-1 rounded-2xl bg-[var(--c-text)] px-2 py-4 text-[var(--c-bg)] shadow-lg"
+            >
+              <span className="block text-3xl sm:text-4xl">
+                {left === null ? "--" : String(value).padStart(2, "0")}
+              </span>
+              <span className="text-xs uppercase tracking-widest opacity-80">{label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function Rsvp({ whatsapp, message }: { whatsapp: string; message: string }) {
+  const layer = useRef<HTMLDivElement>(null);
+  const [confirmed, setConfirmed] = useState(false);
+  if (!whatsapp) return null;
+
+  const waUrl = `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`;
+  const hearts = ["💕", "💖", "❤️", "🌹", "🎉", "🥳"];
+
+  const onClick = () => {
+    const host = layer.current;
+    if (host) {
+      for (let i = 0; i < 24; i++) {
+        const h = document.createElement("span");
+        h.textContent = hearts[i % hearts.length];
+        h.style.cssText = `position:absolute;bottom:-2rem;font-size:2rem;left:${Math.random() * 100}%;animation:invita-float-up ${2 + Math.random() * 2}s linear ${Math.random() * 0.6}s forwards`;
+        host.appendChild(h);
+        setTimeout(() => h.remove(), 4000);
+      }
+    }
+    setConfirmed(true);
+    setTimeout(() => window.open(waUrl, "_blank", "noopener"), 700);
+  };
+
+  return (
+    <section className="relative overflow-hidden bg-[var(--c-band)] px-6 py-24 text-center sm:py-32">
+      <div data-reveal>
+        <h2 className="text-4xl sm:text-5xl">¿Confirmas?</h2>
+        <button
+          type="button"
+          onClick={onClick}
+          className="mt-10 rounded-full bg-[var(--c-accent-deep)] px-10 py-5 text-xl font-semibold text-[var(--c-bg)] shadow-xl transition hover:bg-[var(--c-text)]"
+        >
+          {confirmed ? "¡Nos vemos! 💕" : "Confirmar asistencia 💕"}
+        </button>
+      </div>
+      <div ref={layer} className="pointer-events-none absolute inset-0 overflow-hidden" />
+      <style>{`@keyframes invita-float-up{0%{transform:translateY(0) scale(.6);opacity:1}100%{transform:translateY(-120vh) scale(1.4);opacity:0}}`}</style>
+    </section>
+  );
+}
