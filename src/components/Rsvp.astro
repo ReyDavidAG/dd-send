@@ -1,0 +1,57 @@
+---
+import { invitation } from '../data/invitation';
+import Reveal from './Reveal.astro';
+const { rsvp } = invitation;
+const waUrl = `https://wa.me/${rsvp.whatsapp}?text=${encodeURIComponent(rsvp.message)}`;
+---
+
+<section class="relative overflow-hidden bg-blush/50 px-6 py-24 text-center sm:py-32">
+  <Reveal>
+    <h2 class="font-display text-4xl sm:text-5xl">¿Es una cita?</h2>
+    <button
+      id="rsvp-btn"
+      type="button"
+      data-wa={waUrl}
+      data-success={rsvp.successLabel}
+      class="mt-10 rounded-full bg-rose-deep px-10 py-5 font-body text-xl font-semibold text-cream shadow-xl transition hover:scale-105 hover:bg-wine active:scale-95"
+    >
+      {rsvp.buttonLabel} 💕
+    </button>
+  </Reveal>
+  <div id="heart-layer" class="pointer-events-none absolute inset-0 overflow-hidden"></div>
+</section>
+
+<style>
+  @keyframes float-up {
+    0% { transform: translateY(0) scale(0.6); opacity: 1; }
+    100% { transform: translateY(-120vh) scale(1.4); opacity: 0; }
+  }
+  .heart { position: absolute; bottom: -2rem; font-size: 2rem; animation: float-up linear forwards; }
+</style>
+
+<script>
+  const btn = document.getElementById('rsvp-btn')!;
+  const layer = document.getElementById('heart-layer')!;
+  const hearts = ['💕', '💖', '❤️', '🌹', '🍿', '🎬'];
+
+  const burst = () => {
+    for (let i = 0; i < 24; i++) {
+      const h = document.createElement('span');
+      h.className = 'heart';
+      h.textContent = hearts[i % hearts.length];
+      h.style.left = Math.random() * 100 + '%';
+      h.style.animationDuration = 2 + Math.random() * 2 + 's';
+      h.style.animationDelay = Math.random() * 0.6 + 's';
+      layer.appendChild(h);
+      setTimeout(() => h.remove(), 4000);
+    }
+  };
+
+  btn.addEventListener('click', () => {
+    burst();
+    btn.textContent = btn.dataset.success!;
+    btn.classList.add('bg-wine');
+    // Abre WhatsApp con el mensaje pre-escrito tras la animación.
+    setTimeout(() => window.open(btn.dataset.wa!, '_blank', 'noopener'), 700);
+  });
+</script>

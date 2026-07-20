@@ -1,0 +1,49 @@
+@import 'tailwindcss';
+
+/* Paleta cálida/romántica + tipografías. Cámbialas aquí y afectan todo. */
+@theme {
+  --color-cream: #fdf6f0;
+  --color-blush: #f6d9d0;
+  --color-rose: #e0968f;
+  --color-rose-deep: #c96f6a;
+  --color-wine: #6e2b39;
+  --color-gold: #c9a24b;
+
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'Nunito Sans', system-ui, sans-serif;
+  --font-script: 'Great Vibes', cursive;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-wine);
+  font-family: var(--font-body);
+}
+
+/* Fade-in al hacer scroll (activado por IntersectionObserver en Base.astro) */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Respeta a quien prefiere menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  [data-reveal],
+  [data-reveal].is-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
