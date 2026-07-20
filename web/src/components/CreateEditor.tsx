@@ -5,7 +5,14 @@ import { useState, useTransition } from "react";
 import { InvitationView } from "@/templates/InvitationView";
 import { createClient } from "@/lib/supabase/client";
 import { saveDraft } from "@/app/actions/invitations";
-import type { Field, InvitationContent, Palette } from "@/templates/types";
+import { PayButton } from "@/components/PayButton";
+import {
+  SECTION_LABELS,
+  type Field,
+  type InvitationContent,
+  type Palette,
+  type SectionConfig,
+} from "@/templates/types";
 
 type Props = {
   templateKey: string;
@@ -13,6 +20,7 @@ type Props = {
   fields: Field[];
   palettes: Palette[];
   initial: InvitationContent;
+  initialId?: string;
   userId: string;
 };
 
@@ -22,27 +30,29 @@ export function CreateEditor({
   fields,
   palettes,
   initial,
+  initialId,
   userId,
 }: Props) {
   const [content, setContent] = useState<InvitationContent>(initial);
-  const [draftId, setDraftId] = useState<string | undefined>();
-  const [slug, setSlug] = useState<string | null>(null);
+  const [draftId, setDraftId] = useState<string | undefined>(initialId);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"edit" | "preview">("edit");
   const [full, setFull] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const palette = palettes.find((p) => p.key === content.paletteKey) ?? palettes[0];
-  const set = (name: keyof InvitationContent, value: string | string[]) =>
-    setContent((c) => ({ ...c, [name]: value }));
+  const set = (name: keyof InvitationContent, value: unknown) =>
+    setContent((c) => ({ ...c, [name]: value }) as InvitationContent);
 
   const onSave = () =>
     startTransition(async () => {
       setError(null);
+      setSaved(false);
       try {
         const res = await saveDraft({ id: draftId, templateKey, content });
         setDraftId(res.id);
-        setSlug(res.slug);
+        setSaved(true);
       } catch (e) {
         setError(e instanceof Error ? e.message : "No se pudo guardar.");
       }
@@ -51,18 +61,34 @@ export function CreateEditor({
   return (
     <div className="flex flex-1 flex-col">
       {/* Barra superior */}
-      <div className="flex items-center justify-between gap-3 border-b border-line bg-white px-5 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-white px-5 py-3">
         <Link href="/dashboard" className="text-sm text-ink/60 hover:text-ink">
           ← Salir
         </Link>
-        <span className="truncate text-sm font-semibold">{templateName}</span>
-        <button
-          onClick={onSave}
-          disabled={pending}
-          className="rounded-full bg-coral px-5 py-2 text-sm font-semibold text-white transition hover:bg-coral-deep disabled:opacity-60"
-        >
-          {pending ? "Guardando…" : draftId ? "Guardar" : "Guardar borrador"}
-        </button>
+        <span className="order-last w-full truncate text-center text-sm font-semibold sm:order-none sm:w-auto">
+          {templateName}
+        </span>
+        <div className="flex items-center gap-2">
+          {saved && !pending && <span className="text-sm text-green-600">✓ Guardado</span>}
+          <button
+            onClick={onSave}
+            disabled={pending}
+            className="inline-flex items-center gap-2 rounded-full bg-coral px-5 py-2 text-sm font-semibold text-white transition hover:bg-coral-deep disabled:opacity-60"
+          >
+            {pending && (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+            )}
+            {pending ? "Guardando…" : draftId ? "Guardar" : "Guardar borrador"}
+          </button>
+          {draftId && (
+            <PayButton
+              invitationId={draftId}
+              className="rounded-full border border-coral px-5 py-2 text-sm font-semibold text-coral-deep transition hover:bg-lilac disabled:opacity-60"
+            >
+              Pagar y publicar
+            </PayButton>
+          )}
+        </div>
       </div>
 
       {/* Tabs (solo móvil) */}
@@ -85,6 +111,11 @@ export function CreateEditor({
         <div
           className={`${tab === "edit" ? "block" : "hidden"} space-y-4 overflow-y-auto p-5 lg:block lg:max-h-[calc(100vh-57px)]`}
         >
+          <SectionsEditor
+            sections={content.sections}
+            onChange={(s) => set("sections", s)}
+          />
+
           {fields.map((f) => (
             <label key={f.name} className="block space-y-1">
               <span className="text-sm font-medium">
@@ -107,25 +138,16 @@ export function CreateEditor({
                       type="button"
                       onClick={() => set("paletteKey", p.key)}
                       className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition ${
-                        content.paletteKey === p.key
-                          ? "border-coral ring-2 ring-coral/30"
-                          : "border-line"
+                        content.paletteKey === p.key ? "border-coral ring-2 ring-coral/30" : "border-line"
                       }`}
                     >
-                      <span
-                        className="h-4 w-4 rounded-full"
-                        style={{ background: p.accentDeep }}
-                      />
+                      <span className="h-4 w-4 rounded-full" style={{ background: p.accentDeep }} />
                       {p.name}
                     </button>
                   ))}
                 </div>
               ) : f.type === "photos" ? (
-                <PhotosField
-                  value={content.photos}
-                  userId={userId}
-                  onChange={(urls) => set("photos", urls)}
-                />
+                <PhotosField value={content.photos} userId={userId} onChange={(urls) => set("photos", urls)} />
               ) : (
                 <input
                   type={f.type === "date" ? "datetime-local" : f.type === "tel" ? "tel" : "text"}
@@ -143,17 +165,9 @@ export function CreateEditor({
             </label>
           ))}
 
-          {slug && (
-            <p className="rounded-xl bg-lilac px-4 py-3 text-sm">
-              Borrador guardado ·{" "}
-              <Link href="/dashboard" className="font-semibold text-coral-deep underline">
-                ir al dashboard
-              </Link>
-            </p>
-          )}
           {error && <p className="text-sm text-coral-deep">{error}</p>}
           <p className="text-xs text-ink/50">
-            El pago y la publicación vienen después (Fase 5). Por ahora se guarda como borrador.
+            Guarda el borrador y luego «Pagar y publicar» para activar la invitación.
           </p>
         </div>
 
@@ -173,7 +187,6 @@ export function CreateEditor({
         </div>
       </div>
 
-      {/* Overlay pantalla completa */}
       {full && (
         <div className="dd-fade-in fixed inset-0 z-50 overflow-y-auto bg-black/20 backdrop-blur-sm">
           <button
@@ -185,6 +198,60 @@ export function CreateEditor({
           <InvitationView content={content} palette={palette} animate={false} />
         </div>
       )}
+    </div>
+  );
+}
+
+function SectionsEditor({
+  sections,
+  onChange,
+}: {
+  sections: SectionConfig[];
+  onChange: (s: SectionConfig[]) => void;
+}) {
+  const move = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= sections.length) return;
+    const arr = [...sections];
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    onChange(arr);
+  };
+  const toggle = (i: number) =>
+    onChange(sections.map((s, k) => (k === i ? { ...s, visible: !s.visible } : s)));
+
+  return (
+    <div className="rounded-xl border border-line p-3">
+      <p className="text-sm font-semibold">Secciones (muestra, oculta y reordena)</p>
+      <ul className="mt-2 space-y-1">
+        {sections.map((s, i) => (
+          <li key={s.id} className="flex items-center justify-between gap-2 rounded-lg bg-sand px-3 py-2">
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={s.visible} onChange={() => toggle(i)} />
+              {SECTION_LABELS[s.id]}
+            </label>
+            <span className="flex gap-1">
+              <button
+                type="button"
+                onClick={() => move(i, -1)}
+                disabled={i === 0}
+                className="grid h-7 w-7 place-items-center rounded-lg border border-line disabled:opacity-30"
+                aria-label="Subir"
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                onClick={() => move(i, 1)}
+                disabled={i === sections.length - 1}
+                className="grid h-7 w-7 place-items-center rounded-lg border border-line disabled:opacity-30"
+                aria-label="Bajar"
+              >
+                ↓
+              </button>
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -242,14 +309,7 @@ function PhotosField({
         ))}
         <label className="grid h-20 w-16 cursor-pointer place-items-center rounded-lg border-2 border-dashed border-line text-2xl text-ink/40 hover:border-coral">
           +
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={onFiles}
-            disabled={uploading}
-            className="hidden"
-          />
+          <input type="file" accept="image/*" multiple onChange={onFiles} disabled={uploading} className="hidden" />
         </label>
       </div>
       {uploading && <p className="text-xs text-ink/60">Subiendo…</p>}
