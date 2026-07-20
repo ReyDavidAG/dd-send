@@ -24,26 +24,30 @@ body {
   font-family: var(--font-body);
 }
 
-/* Fade-in al hacer scroll (activado por IntersectionObserver en Base.astro) */
-[data-reveal] {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-}
-[data-reveal].is-visible {
-  opacity: 1;
-  transform: none;
+/* Barra de progreso atada a la posición del scroll — CSS nativo, sin JS.
+   Se reversa sola al subir. Si el navegador no lo soporta (Safari/iOS),
+   la barra simplemente queda en scaleX(0) e invisible: nada se rompe. */
+@supports (animation-timeline: scroll()) {
+  #scroll-progress {
+    animation: progress-grow linear both;
+    animation-timeline: scroll(root);
+  }
+  @keyframes progress-grow {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
 }
 
-/* Respeta a quien prefiere menos movimiento */
+/* Respeta a quien prefiere menos movimiento (GSAP se desactiva vía JS) */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
-  [data-reveal],
-  [data-reveal].is-visible {
-    opacity: 1;
-    transform: none;
-    transition: none;
+  #scroll-progress {
+    animation: none;
   }
 }

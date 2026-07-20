@@ -14,6 +14,7 @@ const title = `Una cita para ${to}`;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={`Invitación de ${from} para ${to}`} />
+    <link rel="icon" href={asset('favicon.svg')} type="image/svg+xml" />
     <title>{title}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -23,6 +24,8 @@ const title = `Una cita para ${to}`;
     />
   </head>
   <body class="overflow-x-hidden">
+    <!-- Barra de progreso de lectura: se llena atada al scroll (CSS nativo). -->
+    <div id="scroll-progress" class="fixed left-0 top-0 z-50 h-1 w-full origin-left scale-x-0 bg-gradient-to-r from-rose to-wine"></div>
     <slot />
 
     {invitation.music && (
@@ -33,19 +36,8 @@ const title = `Una cita para ${to}`;
     )}
 
     <script>
-      // Fade-in al scroll — un solo observer para todos los [data-reveal].
-      const io = new IntersectionObserver(
-        (entries) => {
-          for (const e of entries) {
-            if (e.isIntersecting) {
-              e.target.classList.add('is-visible');
-              io.unobserve(e.target);
-            }
-          }
-        },
-        { threshold: 0.15 }
-      );
-      document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
+      // Las animaciones de scroll (GSAP + ScrollTrigger) viven en cada
+      // componente de sección. Aquí solo queda el parallax del hero.
 
       // Parallax sutil — mueve [data-parallax] a fracción del scroll.
       const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
