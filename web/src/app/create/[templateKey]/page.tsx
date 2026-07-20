@@ -13,15 +13,22 @@ export default async function CreatePage({
   if (!def) notFound();
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [
+    {
+      data: { user },
+    },
+    { data: tpl },
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.from("templates").select("name").eq("key", templateKey).single(),
+  ]);
   if (!user) redirect("/login");
 
   return (
     <main className="flex-1">
       <CreateEditor
         templateKey={def.key}
+        templateName={tpl?.name ?? def.key}
         fields={def.schema.fields}
         palettes={def.schema.palettes}
         initial={def.schema.defaults}
