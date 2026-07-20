@@ -1,12 +1,11 @@
 ---
 import { invitation } from '../data/invitation';
-import Reveal from './Reveal.astro';
 const { rsvp } = invitation;
 const waUrl = `https://wa.me/${rsvp.whatsapp}?text=${encodeURIComponent(rsvp.message)}`;
 ---
 
-<section class="relative overflow-hidden bg-blush/50 px-6 py-24 text-center sm:py-32">
-  <Reveal>
+<section id="rsvp" class="relative overflow-hidden bg-blush/50 px-6 py-24 text-center sm:py-32">
+  <div class="rsvp-card">
     <h2 class="font-display text-4xl sm:text-5xl">¿Es una cita?</h2>
     <button
       id="rsvp-btn"
@@ -17,7 +16,7 @@ const waUrl = `https://wa.me/${rsvp.whatsapp}?text=${encodeURIComponent(rsvp.mes
     >
       {rsvp.buttonLabel} 💕
     </button>
-  </Reveal>
+  </div>
   <div id="heart-layer" class="pointer-events-none absolute inset-0 overflow-hidden"></div>
 </section>
 
@@ -30,6 +29,30 @@ const waUrl = `https://wa.me/${rsvp.whatsapp}?text=${encodeURIComponent(rsvp.mes
 </style>
 
 <script>
+  import { gsap } from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  gsap.registerPlugin(ScrollTrigger);
+
+  // --- Animación de entrada/reversa (GSAP + ScrollTrigger) ---
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // Tarjeta RSVP: fade + subida con leve zoom
+    gsap.timeline({
+      scrollTrigger: {
+        trigger: '#rsvp',
+        start: 'top 85%',
+        end: 'bottom 20%',
+        toggleActions: 'play reverse play reverse',
+      },
+    }).from('#rsvp .rsvp-card', {
+      opacity: 0,
+      y: 60,
+      scale: 0.9,
+      duration: 0.8,
+      ease: 'back.out(1.4)',
+    });
+  }
+
+  // --- Interacción del botón (burst de corazones + WhatsApp) ---
   const btn = document.getElementById('rsvp-btn')!;
   const layer = document.getElementById('heart-layer')!;
   const hearts = ['💕', '💖', '❤️', '🌹', '🍿', '🎬'];

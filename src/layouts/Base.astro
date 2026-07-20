@@ -1,6 +1,5 @@
 ---
 import '../styles/global.css';
-import 'aos/dist/aos.css';
 import { invitation } from '../data/invitation';
 import { asset } from '../lib/asset';
 import MusicToggle from '../components/MusicToggle.astro';
@@ -37,16 +36,8 @@ const title = `Una cita para ${to}`;
     )}
 
     <script>
-      import AOS from 'aos';
-
-      // Animaciones al scroll (los efectos se ponen con data-aos en cada sección).
-      AOS.init({
-        once: true,
-        duration: 800,
-        easing: 'ease-out-cubic',
-        offset: 80,
-        disable: () => matchMedia('(prefers-reduced-motion: reduce)').matches,
-      });
+      // Las animaciones de scroll (GSAP + ScrollTrigger) viven en cada
+      // componente de sección. Aquí solo queda el parallax del hero.
 
       // Parallax sutil — mueve [data-parallax] a fracción del scroll.
       const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
