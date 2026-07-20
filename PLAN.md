@@ -332,3 +332,14 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
   `saveDraft` (borrador + slug único); migración `0002_storage.sql`. Botón
   Google detrás de env flag (OAuth diferido). Build limpio; smoke test OK.
   Pendiente manual: correr `0002_storage.sql` para habilitar la subida de fotos.
+- **2026-07-20** — Rebrand + pase de diseño (antes de Fase 5). Producto ahora
+  **DD-Send**. Nueva paleta de marca (atardecer plum→coral→ámbar) para el chrome
+  (distinta a las paletas de invitación). Landing rediseñada (hero con gradiente
+  animado, "cómo funciona", catálogo con hover), transición de navegación
+  (`template.tsx`), pantalla de carga con marca (`loading.tsx` + `Loader`),
+  editor responsivo (pestañas Editar/Vista previa en móvil, preview a pantalla
+  completa, selector de paleta con muestras). `allowedDevOrigins` para probar en
+  celular. Gotcha Next 16: si cambias el config y aparece el error
+  `global-error.js#default ... React Client Manifest`, es caché stale →
+  `rm -rf web/.next` y reinicia. **Pendiente (próxima iteración de diseño):**
+  más campos de personalización por plantilla y layouts visualmente distintos.
