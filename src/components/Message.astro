@@ -1,0 +1,30 @@
+---
+import { invitation } from '../data/invitation';
+import { asset } from '../lib/asset';
+import Reveal from './Reveal.astro';
+const { photos, messages } = invitation;
+---
+
+<section class="relative overflow-hidden px-6 py-20 sm:py-28">
+  <Reveal class="mx-auto max-w-xl text-center">
+    <p class="font-script text-4xl text-rose-deep sm:text-5xl">{messages.greeting}</p>
+    <p class="mt-8 font-display text-xl leading-relaxed sm:text-2xl">{messages.love}</p>
+  </Reveal>
+
+  <div class="mx-auto mt-14 grid max-w-2xl gap-4 sm:grid-cols-3">
+    {photos.map((src, i) => (
+      <Reveal class={i === 1 ? 'sm:mt-8' : ''}>
+        <img
+          src={asset(src)}
+          alt={`Recuerdo ${i + 1}`}
+          loading="lazy"
+          class="aspect-[3/4] w-full rounded-2xl border-4 border-white object-cover shadow-lg"
+        />
+      </Reveal>
+    ))}
+  </div>
+
+  <Reveal class="mt-12 text-center">
+    <p class="font-script text-3xl text-rose-deep">{messages.signature}</p>
+  </Reveal>
+</section>

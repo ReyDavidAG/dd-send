@@ -1,0 +1,75 @@
+---
+import '../styles/global.css';
+import { invitation } from '../data/invitation';
+import { asset } from '../lib/asset';
+import MusicToggle from '../components/MusicToggle.astro';
+
+const { to, from } = invitation;
+const title = `Una cita para ${to}`;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={`Invitación de ${from} para ${to}`} />
+    <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Great+Vibes&family=Nunito+Sans:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="overflow-x-hidden">
+    <slot />
+
+    {invitation.music && (
+      <>
+        <audio id="bg-music" src={asset(invitation.music)} loop preload="none"></audio>
+        <MusicToggle />
+      </>
+    )}
+
+    <script>
+      // Fade-in al scroll — un solo observer para todos los [data-reveal].
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) {
+              e.target.classList.add('is-visible');
+              io.unobserve(e.target);
+            }
+          }
+        },
+        { threshold: 0.15 }
+      );
+      document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
+
+      // Parallax sutil — mueve [data-parallax] a fracción del scroll.
+      const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const parallaxEls = document.querySelectorAll<HTMLElement>('[data-parallax]');
+      if (!prefersReduced && parallaxEls.length) {
+        let ticking = false;
+        const update = () => {
+          for (const el of parallaxEls) {
+            const speed = Number(el.dataset.parallax) || 0.2;
+            el.style.transform = `translateY(${window.scrollY * speed}px)`;
+          }
+          ticking = false;
+        };
+        addEventListener(
+          'scroll',
+          () => {
+            if (!ticking) {
+              requestAnimationFrame(update);
+              ticking = true;
+            }
+          },
+          { passive: true }
+        );
+      }
+    </script>
+  </body>
+</html>

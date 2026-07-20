@@ -1,0 +1,59 @@
+---
+import { invitation } from '../data/invitation';
+import Reveal from './Reveal.astro';
+const { event } = invitation;
+---
+
+<section class="px-6 py-20 text-center sm:py-28">
+  <Reveal>
+    <p class="text-sm uppercase tracking-[0.3em] text-rose-deep">Falta poco</p>
+    <div
+      id="countdown"
+      data-target={event.datetime}
+      class="mx-auto mt-8 flex max-w-md justify-center gap-4 sm:gap-6"
+    >
+      {['days', 'hours', 'minutes', 'seconds'].map((unit) => (
+        <div class="flex-1 rounded-2xl bg-wine px-2 py-4 text-cream shadow-lg">
+          <span data-unit={unit} class="block font-display text-3xl sm:text-4xl">--</span>
+          <span class="text-xs uppercase tracking-widest text-blush">
+            {{ days: 'días', hours: 'hrs', minutes: 'min', seconds: 'seg' }[unit]}
+          </span>
+        </div>
+      ))}
+    </div>
+    <p id="countdown-done" class="mt-8 hidden font-script text-4xl text-rose-deep">
+      ¡Es hoy! 🍿💕
+    </p>
+  </Reveal>
+</section>
+
+<script>
+  const root = document.getElementById('countdown')!;
+  const done = document.getElementById('countdown-done')!;
+  const target = new Date(root.dataset.target!).getTime();
+  const cells = {
+    days: root.querySelector('[data-unit="days"]')!,
+    hours: root.querySelector('[data-unit="hours"]')!,
+    minutes: root.querySelector('[data-unit="minutes"]')!,
+    seconds: root.querySelector('[data-unit="seconds"]')!,
+  };
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  const tick = () => {
+    const diff = target - Date.now();
+    if (diff <= 0) {
+      root.classList.add('hidden');
+      done.classList.remove('hidden');
+      clearInterval(timer);
+      return;
+    }
+    const s = Math.floor(diff / 1000);
+    cells.days.textContent = String(Math.floor(s / 86400));
+    cells.hours.textContent = pad(Math.floor((s % 86400) / 3600));
+    cells.minutes.textContent = pad(Math.floor((s % 3600) / 60));
+    cells.seconds.textContent = pad(s % 60);
+  };
+
+  tick();
+  const timer = setInterval(tick, 1000);
+</script>

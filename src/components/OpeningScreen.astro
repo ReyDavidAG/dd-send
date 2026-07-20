@@ -1,0 +1,31 @@
+---
+import { invitation } from '../data/invitation';
+const { to, messages } = invitation;
+---
+
+<div
+  id="opening"
+  class="fixed inset-0 z-50 flex cursor-pointer flex-col items-center justify-center gap-6 bg-gradient-to-b from-wine via-rose-deep to-rose px-6 text-center text-cream transition-all duration-1000"
+>
+  <p class="font-script text-4xl text-blush drop-shadow sm:text-5xl">{to}</p>
+  <div class="text-6xl motion-safe:animate-pulse">💌</div>
+  <p class="font-display text-2xl tracking-wide sm:text-3xl">{messages.tapToOpen}</p>
+  <span class="text-sm uppercase tracking-[0.3em] text-blush/80">toca</span>
+</div>
+
+<script>
+  const opening = document.getElementById('opening')!;
+  const audio = document.getElementById('bg-music') as HTMLAudioElement | null;
+
+  const open = () => {
+    // La música solo puede arrancar tras un gesto del usuario: este toque.
+    audio?.play().catch(() => {});
+    opening.classList.add('scale-110', 'opacity-0', 'pointer-events-none');
+    document.body.style.overflow = '';
+    setTimeout(() => opening.remove(), 1000);
+  };
+
+  // Bloquea el scroll hasta que abra.
+  document.body.style.overflow = 'hidden';
+  opening.addEventListener('click', open, { once: true });
+</script>

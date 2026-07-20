@@ -1,0 +1,39 @@
+---
+import Base from '../layouts/Base.astro';
+import OpeningScreen from '../components/OpeningScreen.astro';
+import Message from '../components/Message.astro';
+import DateDetails from '../components/DateDetails.astro';
+import Countdown from '../components/Countdown.astro';
+import Rsvp from '../components/Rsvp.astro';
+import { invitation } from '../data/invitation';
+import { asset } from '../lib/asset';
+const { to, from, photos } = invitation;
+---
+
+<Base>
+  <OpeningScreen />
+
+  <!-- Hero con parallax sutil sobre la primera foto -->
+  <header class="relative flex h-[90vh] items-center justify-center overflow-hidden text-center">
+    <img
+      src={asset(photos[0])}
+      alt=""
+      data-parallax="0.25"
+      class="absolute inset-0 -z-10 h-[120%] w-full object-cover"
+    />
+    <div class="absolute inset-0 -z-10 bg-wine/45"></div>
+    <div class="px-6 text-cream drop-shadow-lg">
+      <p class="font-script text-6xl sm:text-7xl">{from} & {to}</p>
+      <p class="mt-4 font-display text-xl uppercase tracking-[0.35em]">Una cita de película</p>
+    </div>
+  </header>
+
+  <Message />
+  <DateDetails />
+  <Countdown />
+  <Rsvp />
+
+  <footer class="py-10 text-center text-sm text-wine/60">
+    Hecho con 💕 por {from}
+  </footer>
+</Base>
