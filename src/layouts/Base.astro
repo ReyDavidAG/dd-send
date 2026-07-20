@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import 'aos/dist/aos.css';
 import { invitation } from '../data/invitation';
 import { asset } from '../lib/asset';
 import MusicToggle from '../components/MusicToggle.astro';
@@ -33,19 +34,16 @@ const title = `Una cita para ${to}`;
     )}
 
     <script>
-      // Fade-in al scroll — un solo observer para todos los [data-reveal].
-      const io = new IntersectionObserver(
-        (entries) => {
-          for (const e of entries) {
-            if (e.isIntersecting) {
-              e.target.classList.add('is-visible');
-              io.unobserve(e.target);
-            }
-          }
-        },
-        { threshold: 0.15 }
-      );
-      document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));
+      import AOS from 'aos';
+
+      // Animaciones al scroll (los efectos se ponen con data-aos en cada sección).
+      AOS.init({
+        once: true,
+        duration: 800,
+        easing: 'ease-out-cubic',
+        offset: 80,
+        disable: () => matchMedia('(prefers-reduced-motion: reduce)').matches,
+      });
 
       // Parallax sutil — mueve [data-parallax] a fracción del scroll.
       const prefersReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;

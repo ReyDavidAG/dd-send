@@ -11,16 +11,19 @@ export const invitation = {
 
   // Detalles de la cita
   event: {
-    movie: 'Nombre de la película',
-    // Fecha/hora en ISO con zona horaria. Ejemplo (hora del centro de México):
-    datetime: '2026-07-25T21:00:00-06:00',
-    datetimeLabel: 'Viernes 25 de julio · 9:00 PM',
-    callLink: 'https://meet.google.com/tu-enlace',
-    callLabel: 'Entrar a la videollamada',
+    movie: 'ESCRIBE AQUÍ LA PELÍCULA',
+    // Fecha/hora en ISO con zona horaria (centro de México, -06:00):
+    datetime: '2026-07-20T20:00:00-06:00',
+    datetimeLabel: 'Hoy · 8:00 PM',
+    // Vemos la peli por Discord. Un grupo/DM de 3 no tiene link para compartir:
+    // deja callLink en '' y solo se muestra el texto. Si es un servidor con
+    // invitación, pega aquí su https://discord.gg/... y se vuelve un botón.
+    callLink: '',
+    callLabel: 'Nos vemos en Discord 🎧',
   },
 
   // Fotos (colócalas en public/images/). Rutas relativas, sin dominio.
-  photos: ['images/foto-1.jpg', 'images/foto-2.jpg', 'images/foto-3.jpg'],
+  photos: ['images/foto-1.jpeg', 'images/foto-2.jpeg', 'images/foto-3.jpeg'],
 
   // Textos personalizados
   messages: {
@@ -31,11 +34,11 @@ export const invitation = {
   },
 
   // Música de fondo (colócala en public/music/). Deja en null para desactivarla.
-  music: 'music/cancion.mp3' as string | null,
+  music: 'music/feel_it.mp3' as string | null,
 
   // "Confirmar asistencia" abre WhatsApp con un mensaje pre-escrito.
   rsvp: {
-    whatsapp: '5211234567890', // tu número con código de país, solo dígitos
+    whatsapp: '524741285394', // tu número con código de país, solo dígitos
     message: '¡Sí quiero nuestra cita de película! 🎬💕',
     buttonLabel: 'Confirmar asistencia',
     successLabel: '¡Nos vemos esa noche! 💕',

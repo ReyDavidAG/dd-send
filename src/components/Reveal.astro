@@ -1,12 +1,15 @@
 ---
-// Envuelve contenido para que aparezca con fade-in al hacer scroll.
-// Uso: <Reveal><h2>...</h2></Reveal>
+// Envuelve contenido para animarlo al hacer scroll (usa AOS).
+// Uso: <Reveal animation="zoom-in" delay={100}>...</Reveal>
+// Efectos: fade-up, fade-right, fade-left, zoom-in, flip-up, etc. (ver docs de AOS).
 interface Props {
   class?: string;
+  animation?: string;
+  delay?: number;
 }
-const { class: className = '' } = Astro.props;
+const { class: className = '', animation = 'fade-up', delay } = Astro.props;
 ---
 
-<div data-reveal class={className}>
+<div data-aos={animation} data-aos-delay={delay} class={className}>
   <slot />
 </div>

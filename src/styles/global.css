@@ -24,26 +24,9 @@ body {
   font-family: var(--font-body);
 }
 
-/* Fade-in al hacer scroll (activado por IntersectionObserver en Base.astro) */
-[data-reveal] {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-}
-[data-reveal].is-visible {
-  opacity: 1;
-  transform: none;
-}
-
-/* Respeta a quien prefiere menos movimiento */
+/* Respeta a quien prefiere menos movimiento (AOS se desactiva vía JS) */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
-  }
-  [data-reveal],
-  [data-reveal].is-visible {
-    opacity: 1;
-    transform: none;
-    transition: none;
   }
 }

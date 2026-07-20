@@ -13,7 +13,7 @@ const { photos, messages } = invitation;
 
   <div class="mx-auto mt-14 grid max-w-2xl gap-4 sm:grid-cols-3">
     {photos.map((src, i) => (
-      <Reveal class={i === 1 ? 'sm:mt-8' : ''}>
+      <Reveal animation="zoom-in" delay={i * 150} class={i === 1 ? 'sm:mt-8' : ''}>
         <img
           src={asset(src)}
           alt={`Recuerdo ${i + 1}`}
