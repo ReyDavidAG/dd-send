@@ -2,7 +2,8 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 // Refresca la sesión de Supabase en cada request (patrón oficial @supabase/ssr).
-export async function middleware(request: NextRequest) {
+// Next 16: middleware → proxy (runtime nodejs, export nombrado `proxy`).
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
