@@ -237,7 +237,12 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
   (`server`/`client`/`admin`) + `middleware.ts`. Deps: `@supabase/ssr`,
   `@supabase/supabase-js`, `mercadopago`, `gsap`, `@gsap/react`.
   **Pendiente manual del usuario** (§12) antes de Fase 2.
-- [ ] **Fase 2 — Auth + Landing.** Registro/login (Supabase Auth) y landing.
+- [x] **Fase 2 — Auth + Landing.** Auth email/password (Supabase) vía Server
+  Actions (`signIn`/`signUp`/`signOut`) + `AuthForm` compartido + páginas
+  `/login` `/register` + route handler `/auth/confirm`. Landing que lista el
+  catálogo desde Supabase. Dashboard mínimo protegido (redirige a `/login` sin
+  sesión). Verificado end-to-end: landing renderiza plantillas, dashboard
+  redirige. **Rutas usadas: `/login`, `/register`** (sin route group, más simple).
 - [ ] **Fase 3 — Plantillas.** Registry + portar diseño "cita" (Astro → React,
   GSAP en `useEffect`). Añadir "cumpleaños" y "boda".
 - [ ] **Fase 4 — Formulario + preview en vivo.** Por plantilla; guarda draft.
@@ -257,6 +262,14 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
 - **GSAP en React**: init dentro de `useEffect` con `gsap.context()` para
   limpieza; `toggleActions: 'play reverse play reverse'` (mismo comportamiento
   que la referencia Astro).
+- **Next.js 16 (breaking changes vs. versiones previas)** — ver `web/AGENTS.md`:
+  - `cookies()`/`headers()`/`params`/`searchParams` son **async** (hay que
+    `await`). Ya aplicado en los clientes Supabase y páginas.
+  - **`middleware.ts` → `proxy.ts`** (export `proxy`, runtime nodejs). Con `src/`
+    debe ir en **`src/proxy.ts`** para que Next lo detecte.
+  - Server Actions con `useActionState(prevState, formData)`; `redirect()` fuera
+    de try/catch; **re-verificar auth dentro de cada action/página protegida**.
+  - `next lint` eliminado; Turbopack por defecto en dev/build.
 
 ## 12. Setup manual pendiente (usuario) antes de Fase 2
 1. Crear proyecto en [supabase.com](https://supabase.com).
@@ -279,3 +292,11 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
   de refresco de sesión, migración `0001_init.sql` (4 tablas + RLS + triggers)
   y `seed.sql`. Instaladas deps del stack. Typecheck en verde. Falta setup
   manual de Supabase (§12).
+- **2026-07-20** — Setup Supabase hecho por el usuario: SQL + seed corridos,
+  env con URL + anon key (service_role pendiente hasta Fase 5). Verificado por
+  REST: `templates` devuelve las 3 plantillas.
+- **2026-07-20** — Fase 2. Auth email/password (Server Actions + `AuthForm` +
+  `/login` `/register` + `/auth/confirm`), landing con catálogo, dashboard
+  mínimo protegido. Renombrado `middleware.ts` → `src/proxy.ts` por Next 16.
+  Build y smoke test en verde (landing lista plantillas; dashboard redirige a
+  login sin sesión).
