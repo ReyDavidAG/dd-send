@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Invita — invitaciones personalizadas",
+  title: "DD-Send — invitaciones digitales personalizadas",
   description:
-    "Crea invitaciones digitales únicas: elige una plantilla, personalízala y compártela.",
+    "Crea invitaciones digitales únicas: elige una plantilla, personalízala con tus fotos y textos, y compártela con un enlace.",
 };
 
 export default function RootLayout({
