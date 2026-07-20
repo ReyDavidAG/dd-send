@@ -231,9 +231,12 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
 
 - [x] **Fase 0 — Planeación.** Rama `feature/saas-invitations`, este PLAN.md,
   estructura y esquema aprobados.
-- [ ] **Fase 1 — Scaffold + Supabase.** Next.js en `/web` (TS + Tailwind).
-  Migraciones SQL (esquema + RLS + trigger de profiles + seed de plantillas).
-  Clientes Supabase (server/client/admin) + `middleware.ts`.
+- [x] **Fase 1 — Scaffold + Supabase.** Next.js 16 en `/web` (TS + Tailwind v4).
+  Migración `supabase/migrations/0001_init.sql` (esquema + RLS + trigger de
+  profiles + `updated_at`) y `seed.sql` (3 plantillas). Clientes Supabase
+  (`server`/`client`/`admin`) + `middleware.ts`. Deps: `@supabase/ssr`,
+  `@supabase/supabase-js`, `mercadopago`, `gsap`, `@gsap/react`.
+  **Pendiente manual del usuario** (§12) antes de Fase 2.
 - [ ] **Fase 2 — Auth + Landing.** Registro/login (Supabase Auth) y landing.
 - [ ] **Fase 3 — Plantillas.** Registry + portar diseño "cita" (Astro → React,
   GSAP en `useEffect`). Añadir "cumpleaños" y "boda".
@@ -255,8 +258,24 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
   limpieza; `toggleActions: 'play reverse play reverse'` (mismo comportamiento
   que la referencia Astro).
 
+## 12. Setup manual pendiente (usuario) antes de Fase 2
+1. Crear proyecto en [supabase.com](https://supabase.com).
+2. Copiar `web/.env.local.example` a `web/.env.local` y llenar
+   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+   `SUPABASE_SERVICE_ROLE_KEY` (Project Settings → API).
+3. Ejecutar el SQL: pegar `web/supabase/migrations/0001_init.sql` y luego
+   `web/supabase/seed.sql` en el SQL Editor de Supabase (o usar Supabase CLI).
+4. Crear bucket de Storage `invitation-photos` (lectura pública, escritura por
+   dueño — políticas en Fase 4).
+5. Mercado Pago y su webhook se configuran en Fase 5.
+
 ## 11. Bitácora / Changelog
 - **2026-07-20** — Fase 0. Creada rama `feature/saas-invitations` desde
   `develop`. Definidos arquitectura, estructura de carpetas, esquema de BD y
   RLS. Decisiones confirmadas: Astro en raíz + Next en `/web`; `expires_at =
   event_date + N días`; precio por plantilla en MXN.
+- **2026-07-20** — Fase 1. Scaffold Next.js 16 en `/web` (App Router, TS,
+  Tailwind v4). Añadidos clientes Supabase (server/client/admin), `middleware.ts`
+  de refresco de sesión, migración `0001_init.sql` (4 tablas + RLS + triggers)
+  y `seed.sql`. Instaladas deps del stack. Typecheck en verde. Falta setup
+  manual de Supabase (§12).
