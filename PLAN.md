@@ -258,10 +258,15 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
   único. Migración `0002_storage.sql` (bucket + RLS). Botón Google detrás de
   `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED`. Verificado: build limpio, `/create` sin
   sesión → `/login`, clave inválida → 404.
-- [ ] **Fase 5 — Pagos.** `/api/checkout` (preferencia) + webhook (verifica y
-  activa).
-- [ ] **Fase 6 — Público + Dashboard.** `/i/[slug]` SSR (con expiración) y
-  dashboard de invitaciones con estado.
+- [x] **Fase 5 — Pagos.** `/api/checkout` crea preferencia de Checkout Pro y
+  marca `pending_payment`; `/api/webhooks/mercadopago` verifica la firma HMAC
+  `x-signature` y al aprobarse activa la invitación + calcula `expires_at`.
+  `PayButton` inicia el flujo. Requiere credenciales MP (§12.7).
+- [x] **Fase 6 — Público + Dashboard.** `/i/[slug]` SSR (service-role +
+  validación de estado/expiración, con aviso "no disponible"/"expirada").
+  Dashboard lista las invitaciones con estado (borrador/pago pendiente/activa/
+  expirada) y acciones (editar/ver/pagar). También: secciones mostrar/ocultar/
+  reordenar en el editor + edición de borradores existentes (`?id`).
 - [ ] **Fase 7 — Deploy.** Configuración de Vercel (root dir `/web`, envs).
 
 ## 10. Decisiones técnicas registradas
@@ -303,6 +308,15 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
      `https://<PROJECT_REF>.supabase.co/auth/v1/callback`.
    - **Apple**: pospuesto (requiere Apple Developer de pago, $99/año; sin app
      iOS no aporta al MVP).
+7. **Pagos (Mercado Pago)** — para probar el flujo de pago:
+   - Llenar `SUPABASE_SERVICE_ROLE_KEY` en `.env.local` (lo usan checkout,
+     webhook y la página pública `/i/[slug]`). **Sin esto, esas 3 cosas fallan.**
+   - `MERCADOPAGO_ACCESS_TOKEN` (Mercado Pago → Tus integraciones → credenciales;
+     usa las de **prueba** primero).
+   - `MERCADOPAGO_WEBHOOK_SECRET` (la "clave secreta" de Webhooks en el panel MP).
+   - Configurar la URL de webhook en MP → `${SITE}/api/webhooks/mercadopago`
+     (evento *Pagos*). En local, exponer con un túnel (ngrok/cloudflared) porque
+     MP necesita una URL pública.
 
 ## 11. Bitácora / Changelog
 - **2026-07-20** — Fase 0. Creada rama `feature/saas-invitations` desde
@@ -342,4 +356,12 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
   celular. Gotcha Next 16: si cambias el config y aparece el error
   `global-error.js#default ... React Client Manifest`, es caché stale →
   `rm -rf web/.next` y reinicia. **Pendiente (próxima iteración de diseño):**
-  más campos de personalización por plantilla y layouts visualmente distintos.
+  layouts visualmente distintos por plantilla.
+- **2026-07-20** — Fases 5 y 6 + personalización de secciones. Pagos con Mercado
+  Pago (`/api/checkout` + webhook con verificación de firma → activa + calcula
+  `expires_at`), `PayButton`. Página pública `/i/[slug]` (SSR con aviso de
+  no-disponible/expirada). Dashboard que lista invitaciones con estado y
+  acciones (arregla "no salían los borradores"). Editor: secciones
+  mostrar/ocultar/reordenar, edición de borrador existente (`?id`), feedback de
+  guardado (spinner + "✓ Guardado"). Build limpio; smoke test OK. Pendiente
+  manual: `SUPABASE_SERVICE_ROLE_KEY` + credenciales MP + URL de webhook (§12.7).
