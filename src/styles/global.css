@@ -24,9 +24,30 @@ body {
   font-family: var(--font-body);
 }
 
-/* Respeta a quien prefiere menos movimiento (AOS se desactiva vía JS) */
+/* Barra de progreso atada a la posición del scroll — CSS nativo, sin JS.
+   Se reversa sola al subir. Si el navegador no lo soporta (Safari/iOS),
+   la barra simplemente queda en scaleX(0) e invisible: nada se rompe. */
+@supports (animation-timeline: scroll()) {
+  #scroll-progress {
+    animation: progress-grow linear both;
+    animation-timeline: scroll(root);
+  }
+  @keyframes progress-grow {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+}
+
+/* Respeta a quien prefiere menos movimiento (GSAP se desactiva vía JS) */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  #scroll-progress {
+    animation: none;
   }
 }

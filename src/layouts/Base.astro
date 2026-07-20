@@ -25,6 +25,8 @@ const title = `Una cita para ${to}`;
     />
   </head>
   <body class="overflow-x-hidden">
+    <!-- Barra de progreso de lectura: se llena atada al scroll (CSS nativo). -->
+    <div id="scroll-progress" class="fixed left-0 top-0 z-50 h-1 w-full origin-left scale-x-0 bg-gradient-to-r from-rose to-wine"></div>
     <slot />
 
     {invitation.music && (
