@@ -19,47 +19,52 @@ export function AuthForm({ action, title, submitLabel, altText, altHref, altLabe
   return (
     <form
       action={formAction}
-      className="w-full max-w-sm space-y-5 rounded-2xl bg-white p-8 shadow-lg"
+      className="dd-fade-up w-full max-w-sm space-y-5 rounded-3xl bg-white p-8 shadow-xl ring-1 ring-line"
     >
-      <h1 className="text-center text-2xl font-semibold">{title}</h1>
+      <div className="text-center">
+        <Link href="/" className="dd-text-gradient text-2xl font-extrabold">
+          DD-Send
+        </Link>
+        <h1 className="mt-3 text-xl font-semibold">{title}</h1>
+      </div>
 
       <label className="block space-y-1">
-        <span className="text-sm">Correo</span>
+        <span className="text-sm font-medium">Correo</span>
         <input
           name="email"
           type="email"
           required
           autoComplete="email"
-          className="w-full rounded-lg border border-blush px-3 py-2 outline-none focus:border-rose"
+          className="w-full rounded-xl border border-line px-3 py-2.5 outline-none focus:border-coral"
         />
       </label>
 
       <label className="block space-y-1">
-        <span className="text-sm">Contraseña</span>
+        <span className="text-sm font-medium">Contraseña</span>
         <input
           name="password"
           type="password"
           required
           minLength={6}
           autoComplete="current-password"
-          className="w-full rounded-lg border border-blush px-3 py-2 outline-none focus:border-rose"
+          className="w-full rounded-xl border border-line px-3 py-2.5 outline-none focus:border-coral"
         />
       </label>
 
-      {state?.error && <p className="text-sm text-rose-deep">{state.error}</p>}
-      {state?.message && <p className="text-sm text-wine">{state.message}</p>}
+      {state?.error && <p className="text-sm text-coral-deep">{state.error}</p>}
+      {state?.message && <p className="text-sm text-ink">{state.message}</p>}
 
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-full bg-wine py-3 font-semibold text-cream transition hover:bg-rose-deep disabled:opacity-60"
+        className="w-full rounded-full bg-coral py-3 font-semibold text-white transition hover:bg-coral-deep disabled:opacity-60"
       >
         {pending ? "Un momento…" : submitLabel}
       </button>
 
       <p className="text-center text-sm">
         {altText}{" "}
-        <Link href={altHref} className="font-semibold text-rose-deep underline">
+        <Link href={altHref} className="font-semibold text-coral-deep underline">
           {altLabel}
         </Link>
       </p>
@@ -67,22 +72,22 @@ export function AuthForm({ action, title, submitLabel, altText, altHref, altLabe
       {/* Se muestra solo cuando el provider Google está configurado en Supabase. */}
       {process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true" && (
         <>
-          <div className="flex items-center gap-3 text-xs text-wine/50">
-            <span className="h-px flex-1 bg-blush" />o<span className="h-px flex-1 bg-blush" />
+          <div className="flex items-center gap-3 text-xs text-ink/40">
+            <span className="h-px flex-1 bg-line" />o<span className="h-px flex-1 bg-line" />
           </div>
           <button
             type="submit"
             formAction={signInWithGoogle}
             formNoValidate
-            className="flex w-full items-center justify-center gap-2 rounded-full border border-blush bg-white py-3 font-semibold transition hover:bg-cream"
+            className="flex w-full items-center justify-center gap-2 rounded-full border border-line bg-white py-3 font-semibold transition hover:bg-sand"
           >
-        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden>
-          <path fill="#4285F4" d="M22.5 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.9a5 5 0 0 1-2.2 3.3v2.7h3.6c2.1-2 3.2-4.9 3.2-7.8z" />
-          <path fill="#34A853" d="M12 23c2.9 0 5.3-1 7.1-2.6l-3.6-2.7c-1 .7-2.3 1.1-3.5 1.1-2.7 0-5-1.8-5.8-4.3H2.5v2.7A11 11 0 0 0 12 23z" />
-          <path fill="#FBBC05" d="M6.2 14.5a6.6 6.6 0 0 1 0-4.2V7.6H2.5a11 11 0 0 0 0 9.9l3.7-3z" />
-          <path fill="#EA4335" d="M12 5.4c1.5 0 2.9.5 4 1.5l3-3A11 11 0 0 0 2.5 7.6l3.7 2.7C7 7.2 9.3 5.4 12 5.4z" />
-        </svg>
-        Continuar con Google
+            <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden>
+              <path fill="#4285F4" d="M22.5 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.9a5 5 0 0 1-2.2 3.3v2.7h3.6c2.1-2 3.2-4.9 3.2-7.8z" />
+              <path fill="#34A853" d="M12 23c2.9 0 5.3-1 7.1-2.6l-3.6-2.7c-1 .7-2.3 1.1-3.5 1.1-2.7 0-5-1.8-5.8-4.3H2.5v2.7A11 11 0 0 0 12 23z" />
+              <path fill="#FBBC05" d="M6.2 14.5a6.6 6.6 0 0 1 0-4.2V7.6H2.5a11 11 0 0 0 0 9.9l3.7-3z" />
+              <path fill="#EA4335" d="M12 5.4c1.5 0 2.9.5 4 1.5l3-3A11 11 0 0 0 2.5 7.6l3.7 2.7C7 7.2 9.3 5.4 12 5.4z" />
+            </svg>
+            Continuar con Google
           </button>
         </>
       )}
