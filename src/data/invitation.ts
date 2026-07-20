@@ -11,7 +11,7 @@ export const invitation = {
 
   // Detalles de la cita
   event: {
-    movie: 'ESCRIBE AQUÍ LA PELÍCULA',
+    movie: 'Backrooms',
     // Fecha/hora en ISO con zona horaria (centro de México, -06:00):
     datetime: '2026-07-20T20:00:00-06:00',
     datetimeLabel: 'Hoy · 8:00 PM',
