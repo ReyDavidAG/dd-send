@@ -1,0 +1,32 @@
+import { notFound, redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getTemplate } from "@/templates/registry";
+import { CreateEditor } from "@/components/CreateEditor";
+
+export default async function CreatePage({
+  params,
+}: {
+  params: Promise<{ templateKey: string }>;
+}) {
+  const { templateKey } = await params;
+  const def = getTemplate(templateKey);
+  if (!def) notFound();
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  return (
+    <main className="flex-1">
+      <CreateEditor
+        templateKey={def.key}
+        fields={def.schema.fields}
+        palettes={def.schema.palettes}
+        initial={def.schema.defaults}
+        userId={user.id}
+      />
+    </main>
+  );
+}

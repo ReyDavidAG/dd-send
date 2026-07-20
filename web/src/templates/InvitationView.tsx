@@ -12,11 +12,13 @@ import type { InvitationContent, Palette } from "./types";
 export function InvitationView({
   content,
   palette,
+  animate = true,
 }: {
   content: InvitationContent;
   palette: Palette;
+  animate?: boolean;
 }) {
-  const scope = useScrollReveal();
+  const scope = useScrollReveal(animate);
 
   const vars = {
     "--c-bg": palette.bg,

@@ -66,12 +66,16 @@ export default async function Home() {
         <h2 className="text-center text-2xl font-semibold">Plantillas</h2>
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {(templates ?? []).map((t) => (
-            <article key={t.key} className="rounded-2xl bg-white p-6 shadow-md">
+            <Link
+              key={t.key}
+              href={`/create/${t.key}`}
+              className="block rounded-2xl bg-white p-6 shadow-md transition hover:shadow-lg"
+            >
               <p className="text-xs uppercase tracking-widest text-rose">{t.category}</p>
               <h3 className="mt-2 text-xl font-semibold">{t.name}</h3>
               <p className="mt-2 text-sm text-wine/80">{t.description}</p>
               <p className="mt-4 font-semibold">{mxn(t.base_price)}</p>
-            </article>
+            </Link>
           ))}
         </div>
       </section>

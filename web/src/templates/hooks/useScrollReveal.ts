@@ -9,10 +9,11 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 // dentro de él se anima al entrar (fade + desplazamiento) y se REVIERTE al
 // salir del viewport (toggleActions play/reverse en ambas direcciones).
 // Personalizable por elemento con data-reveal-x / data-reveal-y (px).
-export function useScrollReveal() {
+export function useScrollReveal(enabled = true) {
   const scope = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!enabled) return; // vista previa del editor: sin animaciones
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     gsap.registerPlugin(ScrollTrigger);
 
@@ -35,7 +36,7 @@ export function useScrollReveal() {
     }, scope);
 
     return () => ctx.revert(); // limpia triggers y estilos al desmontar
-  }, []);
+  }, [enabled]);
 
   return scope;
 }
