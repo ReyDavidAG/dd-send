@@ -251,7 +251,13 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
   renderizan (200) y clave inválida → 404. También: **login con Google (OAuth)**.
   ponytail: un solo layout parametrizado por paleta; layouts distintos por
   plantilla cuando alguno lo necesite.
-- [ ] **Fase 4 — Formulario + preview en vivo.** Por plantilla; guarda draft.
+- [x] **Fase 4 — Formulario + preview en vivo.** Editor `/create/[templateKey]`
+  (protegido): formulario generado desde el schema del registry + vista previa
+  en vivo (`InvitationView animate={false}`) + subida de fotos a Supabase
+  Storage. `saveDraft` (Server Action) crea/actualiza el borrador con slug
+  único. Migración `0002_storage.sql` (bucket + RLS). Botón Google detrás de
+  `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED`. Verificado: build limpio, `/create` sin
+  sesión → `/login`, clave inválida → 404.
 - [ ] **Fase 5 — Pagos.** `/api/checkout` (preferencia) + webhook (verifica y
   activa).
 - [ ] **Fase 6 — Público + Dashboard.** `/i/[slug]` SSR (con expiración) y
@@ -284,8 +290,9 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
    `SUPABASE_SERVICE_ROLE_KEY` (Project Settings → API).
 3. Ejecutar el SQL: pegar `web/supabase/migrations/0001_init.sql` y luego
    `web/supabase/seed.sql` en el SQL Editor de Supabase (o usar Supabase CLI).
-4. Crear bucket de Storage `invitation-photos` (lectura pública, escritura por
-   dueño — políticas en Fase 4).
+4. Storage: correr `web/supabase/migrations/0002_storage.sql` en el SQL Editor
+   (crea el bucket público `invitation-photos` + políticas por dueño). Ya no hay
+   que crearlo a mano.
 5. Mercado Pago y su webhook se configuran en Fase 5.
 6. **Login con Google (OAuth)** — para que el botón funcione:
    - Supabase → Authentication → Providers → **Google**: activar y pegar
@@ -320,3 +327,8 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
   con Google (OAuth) + `/auth/callback`. Apple pospuesto. Build en verde; las 3
   plantillas renderizan (200) y clave inválida → 404. Falta configurar el
   provider Google en Supabase (§12.6) para probar el OAuth.
+- **2026-07-20** — Fase 4. Editor `/create/[templateKey]` con formulario
+  generado del schema + vista previa en vivo + subida de fotos a Storage;
+  `saveDraft` (borrador + slug único); migración `0002_storage.sql`. Botón
+  Google detrás de env flag (OAuth diferido). Build limpio; smoke test OK.
+  Pendiente manual: correr `0002_storage.sql` para habilitar la subida de fotos.
