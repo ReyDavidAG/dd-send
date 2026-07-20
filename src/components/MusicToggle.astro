@@ -1,0 +1,37 @@
+---
+// Botón flotante play/mute para la música de fondo (#bg-music en Base.astro).
+---
+
+<button
+  id="music-toggle"
+  type="button"
+  aria-label="Reproducir música"
+  aria-pressed="false"
+  class="fixed bottom-5 right-5 z-40 grid h-12 w-12 place-items-center rounded-full bg-wine/85 text-cream shadow-lg backdrop-blur transition hover:scale-110 active:scale-95"
+>
+  <span data-icon="off" class="text-xl">♪</span>
+  <span data-icon="on" class="hidden text-xl">❚❚</span>
+</button>
+
+<script>
+  const btn = document.getElementById('music-toggle')!;
+  const audio = document.getElementById('bg-music') as HTMLAudioElement | null;
+  const iconOff = btn.querySelector('[data-icon="off"]')!;
+  const iconOn = btn.querySelector('[data-icon="on"]')!;
+
+  const render = (playing: boolean) => {
+    iconOff.classList.toggle('hidden', playing);
+    iconOn.classList.toggle('hidden', !playing);
+    btn.setAttribute('aria-pressed', String(playing));
+    btn.setAttribute('aria-label', playing ? 'Pausar música' : 'Reproducir música');
+  };
+
+  btn.addEventListener('click', () => {
+    if (!audio) return;
+    if (audio.paused) audio.play().catch(() => {});
+    else audio.pause();
+  });
+
+  audio?.addEventListener('play', () => render(true));
+  audio?.addEventListener('pause', () => render(false));
+</script>

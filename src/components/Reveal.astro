@@ -1,0 +1,12 @@
+---
+// Envuelve contenido para que aparezca con fade-in al hacer scroll.
+// Uso: <Reveal><h2>...</h2></Reveal>
+interface Props {
+  class?: string;
+}
+const { class: className = '' } = Astro.props;
+---
+
+<div data-reveal class={className}>
+  <slot />
+</div>
