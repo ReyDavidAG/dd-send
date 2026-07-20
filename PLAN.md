@@ -243,8 +243,14 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
   catálogo desde Supabase. Dashboard mínimo protegido (redirige a `/login` sin
   sesión). Verificado end-to-end: landing renderiza plantillas, dashboard
   redirige. **Rutas usadas: `/login`, `/register`** (sin route group, más simple).
-- [ ] **Fase 3 — Plantillas.** Registry + portar diseño "cita" (Astro → React,
-  GSAP en `useEffect`). Añadir "cumpleaños" y "boda".
+- [x] **Fase 3 — Plantillas.** `useScrollReveal` (GSAP ScrollTrigger en
+  `useEffect` + `gsap.context`, reversa al subir), `InvitationView` (hero,
+  mensaje+fotos, detalles, countdown en vivo, RSVP con corazones + WhatsApp),
+  registry con 3 plantillas (`cita`/`cumpleanos`/`boda`) — paletas curadas +
+  schema de campos + defaults — y ruta `/preview/[key]`. Verificado: las 3
+  renderizan (200) y clave inválida → 404. También: **login con Google (OAuth)**.
+  ponytail: un solo layout parametrizado por paleta; layouts distintos por
+  plantilla cuando alguno lo necesite.
 - [ ] **Fase 4 — Formulario + preview en vivo.** Por plantilla; guarda draft.
 - [ ] **Fase 5 — Pagos.** `/api/checkout` (preferencia) + webhook (verifica y
   activa).
@@ -281,6 +287,15 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
 4. Crear bucket de Storage `invitation-photos` (lectura pública, escritura por
    dueño — políticas en Fase 4).
 5. Mercado Pago y su webhook se configuran en Fase 5.
+6. **Login con Google (OAuth)** — para que el botón funcione:
+   - Supabase → Authentication → Providers → **Google**: activar y pegar
+     Client ID / Secret (de Google Cloud Console → OAuth consent + credentials).
+   - Supabase → Authentication → URL Configuration → **Redirect URLs**: agregar
+     `http://localhost:3000/auth/callback` (y la URL de Vercel al desplegar).
+   - En Google Cloud, el *Authorized redirect URI* es el callback de Supabase:
+     `https://<PROJECT_REF>.supabase.co/auth/v1/callback`.
+   - **Apple**: pospuesto (requiere Apple Developer de pago, $99/año; sin app
+     iOS no aporta al MVP).
 
 ## 11. Bitácora / Changelog
 - **2026-07-20** — Fase 0. Creada rama `feature/saas-invitations` desde
@@ -300,3 +315,8 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
   mínimo protegido. Renombrado `middleware.ts` → `src/proxy.ts` por Next 16.
   Build y smoke test en verde (landing lista plantillas; dashboard redirige a
   login sin sesión).
+- **2026-07-20** — Fase 3. Sistema de plantillas: `useScrollReveal` (GSAP),
+  `InvitationView`, registry de 3 plantillas + `/preview/[key]`. Añadido login
+  con Google (OAuth) + `/auth/callback`. Apple pospuesto. Build en verde; las 3
+  plantillas renderizan (200) y clave inválida → 404. Falta configurar el
+  provider Google en Supabase (§12.6) para probar el OAuth.
