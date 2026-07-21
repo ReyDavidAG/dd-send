@@ -70,8 +70,24 @@ export type TemplateSchema = {
   defaults: InvitationContent;
 };
 
+// Estilo visual que distingue una plantilla de otra (tipografías + hero).
+export type TemplateStyle = {
+  fontHead: string; // CSS font-family (usa las vars cargadas en el layout)
+  fontBody: string;
+  hero: "photo" | "split" | "festive";
+};
+
+export type InvitationViewProps = {
+  content: InvitationContent;
+  palette: Palette;
+  style: TemplateStyle;
+  animate?: boolean;
+};
+
 export type TemplateDef = {
   key: string;
-  Component: ComponentType<{ content: InvitationContent; palette: Palette }>;
+  name: string;
+  Component: ComponentType<InvitationViewProps>;
   schema: TemplateSchema;
+  style: TemplateStyle;
 };

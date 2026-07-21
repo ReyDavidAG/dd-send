@@ -16,5 +16,5 @@ export default async function PreviewPage({
   const palette = resolvePalette(def, content.paletteKey);
   const { Component } = def;
 
-  return <Component content={content} palette={palette} />;
+  return <Component content={content} palette={palette} style={def.style} />;
 }

@@ -3,19 +3,9 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { useScrollReveal } from "./hooks/useScrollReveal";
-import { DEFAULT_SECTIONS, type InvitationContent, type Palette, type SectionId } from "./types";
+import { DEFAULT_SECTIONS, type InvitationViewProps, type SectionId } from "./types";
 
-// Vista base de invitación (diseño portado de la referencia Astro).
-// Las secciones se muestran/ocultan y reordenan según content.sections.
-export function InvitationView({
-  content,
-  palette,
-  animate = true,
-}: {
-  content: InvitationContent;
-  palette: Palette;
-  animate?: boolean;
-}) {
+export function InvitationView({ content, palette, style, animate = true }: InvitationViewProps) {
   const scope = useScrollReveal(animate);
 
   const vars = {
@@ -25,35 +15,26 @@ export function InvitationView({
     "--c-accent": palette.accent,
     "--c-accent-deep": palette.accentDeep,
     "--c-band": palette.band,
+    "--c-fh": style.fontHead,
+    "--c-fb": style.fontBody,
+    fontFamily: "var(--c-fb)",
   } as CSSProperties;
 
+  const head = "[font-family:var(--c-fh)]";
   const sections = content.sections?.length ? content.sections : DEFAULT_SECTIONS;
 
   const render = (id: SectionId) => {
     switch (id) {
       case "hero":
-        return (
-          <header className="relative flex h-[85vh] items-center justify-center overflow-hidden text-center">
-            {content.photos[0] && (
-              <img src={content.photos[0]} alt="" className="absolute inset-0 h-full w-full object-cover" />
-            )}
-            <div className="absolute inset-0 bg-black/40" />
-            <div className="relative px-6 text-white drop-shadow-lg">
-              <p className="text-sm uppercase tracking-[0.35em]">{content.title}</p>
-              <h1 className="mt-4 text-5xl font-bold sm:text-7xl">
-                {content.fromName} &amp; {content.toName}
-              </h1>
-            </div>
-          </header>
-        );
+        return <Hero content={content} variant={style.hero} head={head} />;
       case "message":
         return (
           <section className="px-6 py-20 sm:py-28">
             <div data-reveal className="mx-auto max-w-xl text-center">
-              <p className="text-3xl text-[var(--c-accent-deep)] sm:text-4xl">{content.title}</p>
+              <p className={`${head} text-3xl text-[var(--c-accent-deep)] sm:text-4xl`}>{content.title}</p>
               <p className="mt-8 text-xl leading-relaxed sm:text-2xl">{content.message}</p>
               {content.signature && (
-                <p className="mt-8 text-2xl text-[var(--c-accent-deep)]">{content.signature}</p>
+                <p className={`${head} mt-8 text-2xl text-[var(--c-accent-deep)]`}>{content.signature}</p>
               )}
             </div>
           </section>
@@ -86,11 +67,11 @@ export function InvitationView({
               <p className="text-sm uppercase tracking-[0.3em] text-[var(--c-accent-deep)]">Detalles</p>
               <dl className="mt-8 space-y-6 text-lg">
                 <div>
-                  <dt className="text-2xl text-[var(--c-accent-deep)]">Evento</dt>
+                  <dt className={`${head} text-2xl text-[var(--c-accent-deep)]`}>Evento</dt>
                   <dd className="text-2xl">{content.eventName}</dd>
                 </div>
                 <div>
-                  <dt className="text-2xl text-[var(--c-accent-deep)]">Cuándo</dt>
+                  <dt className={`${head} text-2xl text-[var(--c-accent-deep)]`}>Cuándo</dt>
                   <dd className="text-2xl">{content.eventDateLabel}</dd>
                 </div>
               </dl>
@@ -111,9 +92,9 @@ export function InvitationView({
           </section>
         );
       case "countdown":
-        return <Countdown iso={content.eventDate} />;
+        return <Countdown iso={content.eventDate} head={head} />;
       case "rsvp":
-        return <Rsvp whatsapp={content.rsvpWhatsapp} message={content.rsvpMessage} />;
+        return <Rsvp whatsapp={content.rsvpWhatsapp} message={content.rsvpMessage} head={head} />;
     }
   };
 
@@ -122,14 +103,79 @@ export function InvitationView({
       {sections
         .filter((s) => s.visible)
         .map((s) => (
-          <Fragment key={s.id}>{render(s.id)}</Fragment>
+          <div id={`sec-${s.id}`} key={s.id}>
+            {render(s.id)}
+          </div>
         ))}
       <footer className="py-10 text-center text-sm opacity-60">Hecho con 💕 · {content.fromName}</footer>
     </div>
   );
 }
 
-function Countdown({ iso }: { iso: string }) {
+function Hero({
+  content,
+  variant,
+  head,
+}: {
+  content: InvitationViewProps["content"];
+  variant: "photo" | "split" | "festive";
+  head: string;
+}) {
+  const names = `${content.fromName} & ${content.toName}`;
+
+  if (variant === "split") {
+    return (
+      <header className="grid min-h-[80vh] items-center gap-8 px-6 py-16 md:grid-cols-2">
+        <div className="order-2 text-center md:order-1 md:text-left">
+          <p className="text-sm uppercase tracking-[0.35em] text-[var(--c-accent-deep)]">{content.title}</p>
+          <h1 className={`${head} mt-4 text-5xl leading-tight sm:text-6xl`}>{names}</h1>
+        </div>
+        <div className="order-1 md:order-2">
+          {content.photos[0] ? (
+            <img
+              src={content.photos[0]}
+              alt=""
+              className="mx-auto aspect-[3/4] w-full max-w-sm rounded-3xl object-cover shadow-2xl"
+            />
+          ) : (
+            <div className="mx-auto aspect-[3/4] w-full max-w-sm rounded-3xl bg-[var(--c-band)]" />
+          )}
+        </div>
+      </header>
+    );
+  }
+
+  if (variant === "festive") {
+    return (
+      <header
+        className="relative flex min-h-[80vh] flex-col items-center justify-center overflow-hidden px-6 text-center text-[var(--c-bg)]"
+        style={{
+          backgroundImage: `linear-gradient(135deg, var(--c-accent), var(--c-accent-deep))`,
+        }}
+      >
+        <div className="text-6xl">🎉</div>
+        <p className="mt-4 text-sm uppercase tracking-[0.35em]">{content.title}</p>
+        <h1 className={`${head} mt-3 text-5xl sm:text-7xl`}>{names}</h1>
+      </header>
+    );
+  }
+
+  // photo (default)
+  return (
+    <header className="relative flex h-[85vh] items-center justify-center overflow-hidden text-center">
+      {content.photos[0] && (
+        <img src={content.photos[0]} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      )}
+      <div className="absolute inset-0 bg-black/40" />
+      <div className="relative px-6 text-white drop-shadow-lg">
+        <p className="text-sm uppercase tracking-[0.35em]">{content.title}</p>
+        <h1 className={`${head} mt-4 text-5xl font-bold sm:text-7xl`}>{names}</h1>
+      </div>
+    </header>
+  );
+}
+
+function Countdown({ iso, head }: { iso: string; head: string }) {
   const target = iso ? new Date(iso).getTime() : 0;
   const [left, setLeft] = useState<number | null>(null);
 
@@ -156,7 +202,7 @@ function Countdown({ iso }: { iso: string }) {
     <section className="px-6 py-20 text-center sm:py-28">
       <p className="text-sm uppercase tracking-[0.3em] text-[var(--c-accent-deep)]">Falta poco</p>
       {done ? (
-        <p className="mt-8 text-4xl text-[var(--c-accent-deep)]">¡Es hoy! 🎉</p>
+        <p className={`${head} mt-8 text-4xl text-[var(--c-accent-deep)]`}>¡Es hoy! 🎉</p>
       ) : (
         <div className="mx-auto mt-8 flex max-w-md justify-center gap-4 sm:gap-6">
           {cells.map(([label, value]) => (
@@ -164,7 +210,7 @@ function Countdown({ iso }: { iso: string }) {
               key={label}
               className="flex-1 rounded-2xl bg-[var(--c-text)] px-2 py-4 text-[var(--c-bg)] shadow-lg"
             >
-              <span className="block text-3xl sm:text-4xl">
+              <span className={`${head} block text-3xl sm:text-4xl`}>
                 {left === null ? "--" : String(value).padStart(2, "0")}
               </span>
               <span className="text-xs uppercase tracking-widest opacity-80">{label}</span>
@@ -176,7 +222,7 @@ function Countdown({ iso }: { iso: string }) {
   );
 }
 
-function Rsvp({ whatsapp, message }: { whatsapp: string; message: string }) {
+function Rsvp({ whatsapp, message, head }: { whatsapp: string; message: string; head: string }) {
   const layer = useRef<HTMLDivElement>(null);
   const [confirmed, setConfirmed] = useState(false);
   if (!whatsapp) return null;
@@ -202,7 +248,7 @@ function Rsvp({ whatsapp, message }: { whatsapp: string; message: string }) {
   return (
     <section className="relative overflow-hidden bg-[var(--c-band)] px-6 py-24 text-center sm:py-32">
       <div data-reveal>
-        <h2 className="text-4xl sm:text-5xl">¿Confirmas?</h2>
+        <h2 className={`${head} text-4xl sm:text-5xl`}>¿Confirmas?</h2>
         <button
           type="button"
           onClick={onClick}

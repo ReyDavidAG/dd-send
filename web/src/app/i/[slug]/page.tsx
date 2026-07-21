@@ -43,5 +43,5 @@ export default async function PublicInvitation({
   const content = inv.content as InvitationContent;
   const palette = resolvePalette(def, content.paletteKey);
   const { Component } = def;
-  return <Component content={content} palette={palette} />;
+  return <Component content={content} palette={palette} style={def.style} />;
 }

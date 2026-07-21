@@ -1,7 +1,15 @@
 import { InvitationView } from "./InvitationView";
-import { DEFAULT_SECTIONS, type Field, type InvitationContent, type Palette, type TemplateDef } from "./types";
+import { PALETTES } from "./palettes";
+import {
+  DEFAULT_SECTIONS,
+  type Field,
+  type InvitationContent,
+  type Palette,
+  type TemplateDef,
+  type TemplateStyle,
+} from "./types";
 
-// Campos editables comunes a las 3 plantillas del MVP.
+// Campos editables comunes a las plantillas del MVP.
 const commonFields = (): Field[] => [
   { name: "paletteKey", label: "Paleta de colores", type: "palette" },
   { name: "title", label: "Título / lema", type: "text", required: true },
@@ -19,11 +27,13 @@ const commonFields = (): Field[] => [
   { name: "rsvpMessage", label: "Mensaje de confirmación", type: "text" },
 ];
 
-const pal = (
-  key: string,
-  name: string,
-  [bg, surface, text, accent, accentDeep, band]: string[],
-): Palette => ({ key, name, bg, surface, text, accent, accentDeep, band });
+const SANS = "var(--font-geist-sans), system-ui, sans-serif";
+const STYLES: Record<string, TemplateStyle> = {
+  cita: { fontHead: "var(--font-script), cursive", fontBody: SANS, hero: "photo" },
+  cumpleanos: { fontHead: "var(--font-fun), sans-serif", fontBody: SANS, hero: "festive" },
+  boda: { fontHead: "var(--font-serif), serif", fontBody: "var(--font-serif), Georgia, serif", hero: "split" },
+  blank: { fontHead: SANS, fontBody: SANS, hero: "photo" },
+};
 
 const sample = (over: Partial<InvitationContent>): InvitationContent => ({
   sections: DEFAULT_SECTIONS.map((s) => ({ ...s })),
@@ -48,64 +58,54 @@ const sample = (over: Partial<InvitationContent>): InvitationContent => ({
   ...over,
 });
 
+const def = (key: string, name: string, over: Partial<InvitationContent>): TemplateDef => ({
+  key,
+  name,
+  Component: InvitationView,
+  style: STYLES[key],
+  schema: { fields: commonFields(), palettes: PALETTES, defaults: sample(over) },
+});
+
 const templates: Record<string, TemplateDef> = {
-  cita: {
-    key: "cita",
-    Component: InvitationView,
-    schema: {
-      fields: commonFields(),
-      palettes: [
-        pal("rosa", "Rosa cálido", ["#fdf6f0", "#ffffff", "#6e2b39", "#e0968f", "#c96f6a", "#f6d9d0"]),
-        pal("vino", "Vino profundo", ["#2a1218", "#3a1a22", "#f6d9d0", "#e0968f", "#e0968f", "#3a1a22"]),
-      ],
-      defaults: sample({ paletteKey: "rosa" }),
-    },
-  },
-  cumpleanos: {
-    key: "cumpleanos",
-    Component: InvitationView,
-    schema: {
-      fields: commonFields(),
-      palettes: [
-        pal("fiesta", "Fiesta", ["#fff7ed", "#ffffff", "#7c2d12", "#f59e0b", "#ea580c", "#fed7aa"]),
-        pal("confeti", "Confeti", ["#faf5ff", "#ffffff", "#581c87", "#d946ef", "#a21caf", "#f5d0fe"]),
-      ],
-      defaults: sample({
-        title: "¡Estás invitado!",
-        eventName: "Mi cumpleaños",
-        eventDateLabel: "Sábado 8:00 PM",
-        locationLabel: "Salón Las Palmas",
-        paletteKey: "fiesta",
-      }),
-    },
-  },
-  boda: {
-    key: "boda",
-    Component: InvitationView,
-    schema: {
-      fields: commonFields(),
-      palettes: [
-        pal("arena", "Arena", ["#faf7f2", "#ffffff", "#3f3a36", "#b08968", "#8a6d4f", "#eae3d9"]),
-        pal("marfil", "Marfil", ["#fbfbf7", "#ffffff", "#44403c", "#a3a380", "#6b705c", "#e8e8dd"]),
-      ],
-      defaults: sample({
-        title: "Nos casamos",
-        eventName: "Nuestra boda",
-        eventDateLabel: "12 de diciembre · 5:00 PM",
-        locationLabel: "Jardín El Encanto",
-        message: "Con la bendición de nuestras familias, queremos compartir contigo este día.",
-        paletteKey: "arena",
-      }),
-    },
-  },
+  cita: def("cita", "Cita romántica", { paletteKey: "rosa" }),
+  cumpleanos: def("cumpleanos", "Cumpleaños", {
+    title: "¡Estás invitado!",
+    eventName: "Mi cumpleaños",
+    eventDateLabel: "Sábado 8:00 PM",
+    locationLabel: "Salón Las Palmas",
+    paletteKey: "fiesta",
+  }),
+  boda: def("boda", "Boda", {
+    title: "Nos casamos",
+    eventName: "Nuestra boda",
+    eventDateLabel: "12 de diciembre · 5:00 PM",
+    locationLabel: "Jardín El Encanto",
+    message: "Con la bendición de nuestras familias, queremos compartir contigo este día.",
+    paletteKey: "arena",
+  }),
+  blank: def("blank", "En blanco", {
+    title: "Tu evento",
+    toName: "Invitado",
+    fromName: "Tú",
+    message: "Escribe aquí tu mensaje.",
+    signature: "",
+    eventName: "Nombre del evento",
+    eventDateLabel: "Fecha",
+    eventDate: "",
+    locationLabel: "",
+    photos: [],
+    paletteKey: "marfil",
+    rsvpMessage: "¡Ahí estaré!",
+  }),
 };
 
 export function getTemplate(key: string): TemplateDef | undefined {
   return templates[key];
 }
 
-export function resolvePalette(def: TemplateDef, paletteKey: string): Palette {
-  return def.schema.palettes.find((p) => p.key === paletteKey) ?? def.schema.palettes[0];
+export function resolvePalette(d: TemplateDef, paletteKey: string): Palette {
+  return d.schema.palettes.find((p) => p.key === paletteKey) ?? d.schema.palettes[0];
 }
 
+export const allTemplates = Object.values(templates);
 export const templateKeys = Object.keys(templates);
