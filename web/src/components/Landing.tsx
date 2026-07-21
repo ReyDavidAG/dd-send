@@ -1,15 +1,14 @@
 "use client";
 
-// Landing del home con animaciones scroll-driven vía Motion (useScroll + useTransform).
-// Diseño intacto: solo se sustituyen las animaciones. Scroll orquestra:
-//  - Hero (parallax out al hacer scroll hacia abajo)
-//  - Pasos y tarjetas de plantillas (stagger al entrar en viewport)
-//  - Debajo de las plantillas: preview "arrastrado desde detrás" (sección sticky
-//    cuyo scale/opacity/y depende de scrollYProgress)
-// Se respeta prefers-reduced-motion vía <MotionConfig reducedMotion="user">.
+// Home: una card de preview VIAJA POR DETRÁS del contenido (fixed, z-0) durante
+// todo el scroll — se ve en los huecos/márgenes de las secciones. Al llegar al
+// final del recorrido pasa al frente (z alto) y se DESPLIEGA a pantalla completa,
+// donde se queda mostrando la plantilla. No gira ni se desvanece.
+// En móvil (<lg) no hay card fija (no hay espacio detrás del texto): se usan
+// previews en flujo normal. Respeta prefers-reduced-motion (versión estática).
 import Link from "next/link";
 import { useRef } from "react";
-import { motion, MotionConfig, useScroll, useTransform } from "motion/react";
+import { motion, MotionConfig, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { MiniPreview } from "@/components/MiniPreview";
 
 const mxn = (cents: number) =>
@@ -21,9 +20,8 @@ const steps = [
   { n: "3", t: "Comparte", d: "Publica y envía un enlace único a tus invitados." },
 ];
 
-// Curva de easing común (suave, lenta al final) — evita que las animaciones se
-// sientan lineales o reboten al final.
 const EASE = [0.22, 1, 0.36, 1] as const;
+const FEATURED = "cita"; // plantilla que viaja detrás y se abre a pantalla completa
 
 export type TemplateCard = {
   key: string;
