@@ -6,9 +6,9 @@ const mxn = (cents: number) =>
   (cents / 100).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
 
 const steps = [
-  { n: "1", t: "Elige una plantilla", d: "Cita, cumpleaños o boda — diseños listos y animados." },
-  { n: "2", t: "Personalízala", d: "Tus fotos, textos, fecha y colores, con vista previa en vivo." },
-  { n: "3", t: "Compártela", d: "Publica y envía un enlace único a tus invitados." },
+  { n: "1", t: "Elige plantilla", d: "Diseños animados listos, o empieza en blanco." },
+  { n: "2", t: "Personaliza", d: "Colores, tipografía, animaciones y secciones a tu gusto." },
+  { n: "3", t: "Comparte", d: "Publica y envía un enlace único a tus invitados." },
 ];
 
 export default async function Home() {
@@ -29,25 +29,22 @@ export default async function Home() {
 
   return (
     <main className="flex-1">
-      {/* Header */}
-      <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-5 py-5 sm:px-8">
-        <span className="text-xl font-bold tracking-tight text-white">DD-Send</span>
+      {/* Header (claro) */}
+      <header className="flex items-center justify-between px-5 py-5 sm:px-8">
+        <span className="dd-text-gradient text-2xl font-extrabold">DD-Send</span>
         <nav className="flex items-center gap-3 text-sm">
           {user ? (
-            <Link
-              href="/dashboard"
-              className="rounded-full bg-white/15 px-4 py-2 font-semibold text-white backdrop-blur transition hover:bg-white/25"
-            >
+            <Link href="/dashboard" className="font-semibold text-coral-deep">
               Mis invitaciones
             </Link>
           ) : (
             <>
-              <Link href="/login" className="font-semibold text-white/90 hover:text-white">
+              <Link href="/login" className="font-semibold text-ink/70 hover:text-ink">
                 Entrar
               </Link>
               <Link
                 href="/register"
-                className="rounded-full bg-white px-4 py-2 font-semibold text-coral-deep transition hover:bg-white/90"
+                className="rounded-full bg-ink px-4 py-2 font-semibold text-sand transition hover:bg-ink/90"
               >
                 Crear cuenta
               </Link>
@@ -56,59 +53,62 @@ export default async function Home() {
         </nav>
       </header>
 
-      {/* Hero */}
-      <section className="dd-gradient-animated relative overflow-hidden px-5 pb-28 pt-32 text-center sm:pt-40">
-        <div className="dd-fade-up mx-auto max-w-3xl">
-          <span className="inline-block rounded-full bg-white/15 px-4 py-1 text-xs font-medium uppercase tracking-widest text-white backdrop-blur">
+      {/* Hero editorial con preview en vivo */}
+      <section className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-12 lg:grid-cols-2 lg:py-20">
+        <div className="dd-fade-up text-center lg:text-left">
+          <span className="inline-block rounded-full bg-lilac px-4 py-1 text-xs font-semibold uppercase tracking-widest text-coral-deep">
             Invitaciones digitales
           </span>
-          <h1 className="mt-6 text-balance text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-6xl">
-            Invitaciones que se sienten hechas a mano
+          <h1 className="mt-6 text-balance text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
+            Tu evento merece una <span className="dd-text-gradient">invitación única</span>
           </h1>
-          <p className="mx-auto mt-6 max-w-xl text-pretty text-lg text-white/90">
-            Elige una plantilla animada, personalízala con tus fotos y textos, y comparte una
-            página única para tu evento. Sin diseñadores, sin complicaciones.
+          <p className="mx-auto mt-6 max-w-md text-pretty text-lg text-ink/70 lg:mx-0">
+            Elige una plantilla animada, cámbiale colores, tipografía y animaciones, reordena las
+            secciones y compártela con un enlace. Sin diseñadores.
           </p>
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
             <Link
               href={user ? "/create" : "/register"}
-              className="w-full rounded-full bg-white px-8 py-4 text-lg font-semibold text-coral-deep shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl sm:w-auto"
+              className="w-full rounded-full bg-coral px-8 py-4 text-lg font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-coral-deep sm:w-auto"
             >
               Crear mi invitación
             </Link>
             <a
               href="#plantillas"
-              className="w-full rounded-full border border-white/40 px-8 py-4 text-lg font-semibold text-white transition hover:bg-white/10 sm:w-auto"
+              className="w-full rounded-full border border-line px-8 py-4 text-lg font-semibold transition hover:bg-white sm:w-auto"
             >
               Ver plantillas
             </a>
           </div>
         </div>
-        {/* curva inferior */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 rounded-t-[50%] bg-sand" />
+
+        {/* Preview destacado en un "marco" */}
+        <div className="dd-fade-up mx-auto w-full max-w-[280px]">
+          <div className="overflow-hidden rounded-[2.5rem] border-8 border-white bg-white shadow-2xl lg:rotate-2">
+            <MiniPreview templateKey="cita" scale={0.5} className="h-[520px]" />
+          </div>
+        </div>
       </section>
 
-      {/* Cómo funciona */}
-      <section className="mx-auto max-w-5xl px-5 py-16 sm:py-24">
-        <div className="grid gap-6 sm:grid-cols-3">
-          {steps.map((s, i) => (
-            <div
-              key={s.n}
-              className="dd-fade-up rounded-2xl bg-white p-6 shadow-sm"
-              style={{ animationDelay: `${i * 0.1}s` }}
-            >
-              <span className="dd-gradient grid h-10 w-10 place-items-center rounded-full font-bold text-white">
+      {/* Pasos */}
+      <section className="mx-auto max-w-5xl px-5 py-10">
+        <div className="grid gap-4 sm:grid-cols-3">
+          {steps.map((s) => (
+            <div key={s.n} className="flex items-start gap-3 rounded-2xl bg-white p-5 shadow-sm">
+              <span className="dd-gradient grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold text-white">
                 {s.n}
               </span>
-              <h3 className="mt-4 text-lg font-semibold">{s.t}</h3>
-              <p className="mt-2 text-sm text-ink/70">{s.d}</p>
+              <div>
+                <h3 className="font-semibold">{s.t}</h3>
+                <p className="mt-1 text-sm text-ink/60">{s.d}</p>
+              </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Catálogo */}
-      <section id="plantillas" className="mx-auto max-w-5xl px-5 pb-24">
+      {/* Galería de plantillas */}
+      <section id="plantillas" className="mx-auto max-w-5xl px-5 py-14">
         <h2 className="text-center text-3xl font-bold">Plantillas</h2>
         <p className="mt-2 text-center text-ink/60">Un pago único por invitación.</p>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -122,7 +122,7 @@ export default async function Home() {
               <div className="border-b border-line">
                 <MiniPreview templateKey={t.key} />
               </div>
-              <div className="flex flex-1 flex-col p-6">
+              <div className="flex flex-1 flex-col p-5">
                 <p className="text-xs uppercase tracking-widest text-coral">{t.category}</p>
                 <h3 className="mt-1 text-xl font-semibold">{t.name}</h3>
                 <p className="mt-2 flex-1 text-sm text-ink/70">{t.description}</p>
