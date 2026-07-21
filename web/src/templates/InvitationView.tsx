@@ -150,15 +150,27 @@ function Hero({
   }
 
   if (variant === "festive") {
+    // Hero festivo (cumpleaños): balloons flotando + 🎂 rebotando + brillos.
+    // Solo cumpleaños usa esta variante, así que las decoraciones no afectan a las demás.
     return (
       <header
-        className="relative flex min-h-[80vh] flex-col items-center justify-center overflow-hidden px-6 text-center text-[var(--c-bg)]"
+        className="relative flex min-h-[85vh] flex-col items-center justify-center overflow-hidden px-6 py-16 text-center text-[var(--c-bg)]"
         style={{
-          backgroundImage: `linear-gradient(135deg, var(--c-accent), var(--c-accent-deep))`,
+          backgroundImage: `radial-gradient(circle at 22% 28%, rgba(255,255,255,0.20), transparent 38%), radial-gradient(circle at 78% 72%, rgba(255,255,255,0.14), transparent 38%), linear-gradient(135deg, var(--c-accent), var(--c-accent-deep))`,
         }}
       >
-        <div className="text-6xl">🎉</div>
-        <p className="mt-4 text-sm uppercase tracking-[0.35em]">{content.title}</p>
+        {/* Decoraciones (solo visuales, aria-hidden, sin pointer-events). */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 select-none">
+          <span className="dd-anim-balloon absolute left-[6%] top-[18%] text-4xl sm:left-[12%] sm:top-[24%] sm:text-6xl">🎈</span>
+          <span className="dd-anim-balloon-d absolute right-[6%] top-[22%] text-4xl sm:right-[12%] sm:top-[18%] sm:text-6xl">🎈</span>
+          <span className="dd-anim-balloon-d absolute bottom-[16%] left-[8%] hidden text-3xl sm:block sm:text-5xl">🎁</span>
+          <span className="dd-anim-balloon absolute bottom-[22%] right-[10%] hidden text-3xl sm:block sm:text-5xl">🎁</span>
+          <span className="dd-anim-twinkle absolute left-1/2 top-[8%] -translate-x-1/2 text-xl sm:text-2xl">✨</span>
+          <span className="dd-anim-twinkle absolute left-[18%] bottom-[28%] hidden text-lg sm:block">⭐</span>
+          <span className="dd-anim-twinkle absolute right-[20%] bottom-[30%] hidden text-lg sm:block">⭐</span>
+        </div>
+        <div className="dd-anim-bounce text-6xl sm:text-7xl" aria-hidden>🎂</div>
+        <p className="mt-6 text-sm uppercase tracking-[0.35em]">{content.title}</p>
         <h1 className={`${head} mt-3 text-5xl sm:text-7xl`}>{names}</h1>
       </header>
     );
