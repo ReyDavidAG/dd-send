@@ -329,6 +329,8 @@ function AnimationField({ value, onChange }: { value: string; onChange: (k: stri
   );
 }
 
+const MAX_PHOTOS = 6;
+
 function PhotosField({
   value,
   onChange,
@@ -338,9 +340,12 @@ function PhotosField({
 }) {
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const full = value.length >= MAX_PHOTOS;
 
   async function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
+    const room = MAX_PHOTOS - value.length;
+    const files = Array.from(e.target.files ?? []).slice(0, room); // respeta el límite
+    e.target.value = "";
     if (!files.length) return;
     setUploading(true);
     setErr(null);
@@ -357,8 +362,14 @@ function PhotosField({
     }
     onChange([...value, ...urls]);
     setUploading(false);
-    e.target.value = "";
   }
+
+  // Quita la foto de la lista Y borra el archivo real de Storage.
+  const remove = (i: number) => {
+    const url = value[i];
+    onChange(value.filter((_, j) => j !== i));
+    void deletePhoto(url).catch(() => {});
+  };
 
   // La primera foto es la portada/banner (hero). "Hacer portada" la mueve al inicio.
   const makeCover = (i: number) => {
@@ -382,7 +393,7 @@ function PhotosField({
             />
             <button
               type="button"
-              onClick={() => onChange(value.filter((_, j) => j !== i))}
+              onClick={() => remove(i)}
               className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-coral text-xs text-white"
               aria-label="Quitar foto"
             >
@@ -403,12 +414,16 @@ function PhotosField({
             )}
           </div>
         ))}
-        <label className="grid h-20 w-16 cursor-pointer place-items-center rounded-lg border-2 border-dashed border-line text-2xl text-ink/40 hover:border-coral">
-          +
-          <input type="file" accept="image/*" multiple onChange={onFiles} disabled={uploading} className="hidden" />
-        </label>
+        {!full && (
+          <label className="grid h-20 w-16 cursor-pointer place-items-center rounded-lg border-2 border-dashed border-line text-2xl text-ink/40 hover:border-coral">
+            +
+            <input type="file" accept="image/*" multiple onChange={onFiles} disabled={uploading} className="hidden" />
+          </label>
+        )}
       </div>
-      <p className="text-xs text-ink/50">La foto con borde coral es la portada. «Hacer portada» cambia cuál va de banner.</p>
+      <p className="text-xs text-ink/50">
+        {value.length}/{MAX_PHOTOS} fotos. La del borde coral es la portada; «Hacer portada» cambia cuál va de banner.
+      </p>
       {uploading && <p className="text-xs text-ink/60">Subiendo…</p>}
       {err && <p className="text-xs text-coral-deep">{err}</p>}
     </div>

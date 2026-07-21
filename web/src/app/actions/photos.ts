@@ -22,3 +22,16 @@ export async function uploadPhoto(formData: FormData): Promise<{ url: string }> 
 
   return { url: admin.storage.from("invitation-photos").getPublicUrl(path).data.publicUrl };
 }
+
+// Borra el archivo real de Storage (solo si pertenece al usuario, por su carpeta).
+export async function deletePhoto(url: string): Promise<void> {
+  const uid = await requireUserId();
+  const safeUid = uid.replace(/[^\w-]/g, "_");
+  const marker = "/invitation-photos/";
+  const i = url.indexOf(marker);
+  if (i === -1) return;
+  const path = decodeURIComponent(url.slice(i + marker.length));
+  if (!path.startsWith(`${safeUid}/`)) return; // solo sus propias fotos
+  const admin = createAdminClient();
+  await admin.storage.from("invitation-photos").remove([path]);
+}
