@@ -1,14 +1,10 @@
 "use client";
 
-// Home: una card de preview VIAJA POR DETRÁS del contenido (fixed, z-0) durante
-// el scroll. Al final del recorrido pasa al frente, se abre a pantalla completa
-// y se FUNDE con la invitación COMPLETA (InvitationView real, todas las secciones
-// con sus animaciones), que el usuario scrollea como si la estuviera viendo de
-// verdad. En móvil (<lg) no hay card fija: la invitación completa se muestra a
-// pantalla completa en flujo normal. Respeta prefers-reduced-motion.
+// Home: hero con preview, pasos, galería de plantillas y una invitación de
+// ejemplo completa al final. Con reveals de entrada (Motion); respeta
+// prefers-reduced-motion vía MotionConfig.
 import Link from "next/link";
-import { useRef } from "react";
-import { motion, MotionConfig, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { motion, MotionConfig } from "motion/react";
 import { MiniPreview } from "@/components/MiniPreview";
 import { InvitationView } from "@/templates/InvitationView";
 import { getTemplate, resolvePalette } from "@/templates/registry";
@@ -32,95 +28,14 @@ export type TemplateCard = {
 };
 
 export function Landing({ templates, hasUser }: { templates: TemplateCard[]; hasUser: boolean }) {
-  const reduce = useReducedMotion();
-  const journeyRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress: p } = useScroll({
-    target: journeyRef,
-    offset: ["start start", "end end"],
-  });
-
-  // La card se mantiene tamaño tarjeta (detrás, a la derecha) hasta ~0.7; luego
-  // se abre a pantalla completa y al final se desvanece para revelar la
-  // invitación COMPLETA que queda debajo en flujo (fusión, no "fade a nada").
-  const top = useTransform(p, [0, 0.7, 1], ["16vh", "9vh", "0vh"]);
-  const right = useTransform(p, [0, 0.7, 1], ["4vw", "4vw", "0vw"]);
-  const width = useTransform(p, [0, 0.7, 1], ["36vw", "36vw", "100vw"]);
-  const height = useTransform(p, [0, 0.7, 1], ["66vh", "66vh", "100vh"]);
-  const rotate = useTransform(p, [0, 0.7, 1], [2.5, 1.5, 0]);
-  const borderRadius = useTransform(p, [0.7, 1], ["24px", "0px"]);
-  const borderWidth = useTransform(p, [0.7, 1], [8, 0]);
-  const boxShadow = useTransform(
-    p,
-    [0.7, 1],
-    ["0 30px 60px -15px rgb(0 0 0 / 0.35)", "0 0 0 0 rgb(0 0 0 / 0)"],
-  );
-  const zIndex = useTransform(p, [0.68, 0.7], [0, 50]);
-  const cardOpacity = useTransform(p, [0.9, 1], [1, 0]);
-  const hintOpacity = useTransform(p, [0, 0.12], [1, 0]);
-
-  // Versión estática (prefers-reduced-motion): sin card fija ni movimiento; la
-  // invitación completa igual se muestra (sus reveals se autodesactivan).
-  if (reduce) {
-    return (
-      <MotionConfig reducedMotion="user">
-        <section className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-12 lg:grid-cols-2 lg:py-20">
-          <HeroText hasUser={hasUser} />
-          <PreviewCard className="mx-auto w-full max-w-[280px]" />
-        </section>
-        <Steps />
-        <Gallery templates={templates} />
-        <CompleteInvitation />
-      </MotionConfig>
-    );
-  }
-
   return (
     <MotionConfig reducedMotion="user">
-      {/* Card que viaja por detrás (desktop) y se abre a pantalla completa. */}
-      <motion.div
-        aria-hidden
-        className="pointer-events-none fixed box-border hidden overflow-hidden border-solid border-white bg-white lg:block"
-        style={{
-          top,
-          right,
-          width,
-          height,
-          rotate,
-          borderRadius,
-          borderWidth,
-          boxShadow,
-          zIndex,
-          opacity: cardOpacity,
-          transformOrigin: "top right",
-        }}
-      >
-        <MiniPreview templateKey={FEATURED} scale={0.5} className="h-full w-full" />
-      </motion.div>
-
-      <motion.div
-        style={{ opacity: hintOpacity }}
-        className="pointer-events-none fixed inset-x-0 bottom-6 z-40 hidden text-center text-sm font-medium text-ink/50 lg:block"
-      >
-        Baja para ver la invitación completa ↓
-      </motion.div>
-
-      <div ref={journeyRef}>
-        <section className="relative z-10 mx-auto grid max-w-6xl items-center gap-10 px-5 py-12 lg:grid-cols-2 lg:py-20">
-          <HeroText hasUser={hasUser} />
-          {/* Móvil: preview en flujo. Desktop: espacio reservado (la card fija va ahí). */}
-          <PreviewCard className="mx-auto w-full max-w-[280px] lg:hidden" />
-          <div aria-hidden className="hidden lg:block" style={{ height: "66vh" }} />
-        </section>
-
-        <Steps />
-        <Gallery templates={templates} />
-
-        {/* Desktop: espacio de scroll para que la card se abra antes de la invitación. */}
-        <div aria-hidden className="hidden lg:block" style={{ height: "120vh" }} />
-      </div>
-
-      {/* Invitación COMPLETA (todas las secciones, animada, scrolleable). A
-          pantalla completa en cualquier tamaño. La card fija se funde con esta. */}
+      <section className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-12 lg:grid-cols-2 lg:py-20">
+        <HeroText hasUser={hasUser} />
+        <PreviewCard className="mx-auto w-full max-w-[300px]" />
+      </section>
+      <Steps />
+      <Gallery templates={templates} />
       <CompleteInvitation />
     </MotionConfig>
   );
@@ -229,7 +144,7 @@ function Gallery({ templates }: { templates: TemplateCard[] }) {
     <section id="plantillas" className="relative z-10 mx-auto max-w-5xl px-5 py-14">
       <h2 className="text-center text-3xl font-bold">Plantillas</h2>
       <p className="mt-2 text-center text-ink/60">Un pago único por invitación.</p>
-      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {templates.map((t, i) => (
           <motion.div
             key={t.key}
@@ -237,7 +152,6 @@ function Gallery({ templates }: { templates: TemplateCard[] }) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.55, delay: i * 0.08, ease: EASE }}
-            className="mx-auto w-full max-w-sm sm:max-w-none"
           >
             <Link
               href={`/create/${t.key}`}
@@ -255,7 +169,7 @@ function Gallery({ templates }: { templates: TemplateCard[] }) {
                 <p className="text-xs uppercase tracking-widest text-coral">{t.category}</p>
                 <h3 className="mt-1 text-xl font-semibold">{t.name}</h3>
                 <p className="mt-2 flex-1 text-sm text-ink/70">{t.description}</p>
-                <div className="mt-4 flex items-center justify-between">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                   <span className="flex items-baseline gap-2">
                     <span className="text-lg font-bold text-coral-deep">
                       {mxn(offerPriceCents(t.base_price))}
