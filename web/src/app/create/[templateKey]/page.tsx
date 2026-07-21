@@ -1,5 +1,6 @@
-import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { notFound } from "next/navigation";
+import { requireUserId } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getTemplate } from "@/templates/registry";
 import type { InvitationContent } from "@/templates/types";
 import { CreateEditor } from "@/components/CreateEditor";
@@ -16,26 +17,23 @@ export default async function CreatePage({
   const def = getTemplate(templateKey);
   if (!def) notFound();
 
-  const supabase = await createClient();
-  const [
-    {
-      data: { user },
-    },
-    { data: tpl },
-  ] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.from("templates").select("name").eq("key", templateKey).single(),
-  ]);
-  if (!user) redirect("/login");
+  const uid = await requireUserId();
+  const admin = createAdminClient();
+  const { data: tpl } = await admin
+    .from("templates")
+    .select("name")
+    .eq("key", templateKey)
+    .single();
 
   // Modo edición: cargar un borrador existente (no activo) del usuario.
   let initial = def.schema.defaults;
   let draftId: string | undefined;
   if (id) {
-    const { data: inv } = await supabase
+    const { data: inv } = await admin
       .from("invitations")
       .select("id, content, status")
       .eq("id", id)
+      .eq("user_id", uid)
       .single();
     if (inv && inv.status !== "active") {
       initial = { ...def.schema.defaults, ...(inv.content as InvitationContent) };
@@ -53,7 +51,6 @@ export default async function CreatePage({
         style={def.style}
         initial={initial}
         initialId={draftId}
-        userId={user.id}
       />
     </main>
   );

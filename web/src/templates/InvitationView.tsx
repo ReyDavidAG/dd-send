@@ -16,6 +16,19 @@ import {
   type SectionId,
 } from "./types";
 
+// ¿El enlace es un mapa/ubicación? (Google Maps, goo.gl/maps, maps.app…)
+function isMapLink(url: string): boolean {
+  return /google\.[^/]+\/maps|maps\.google|goo\.gl\/maps|maps\.app/i.test(url || "");
+}
+
+// src del iframe: usa las coordenadas del enlace si las trae (!3d/!4d o @lat,lng);
+// si no, cae al texto del lugar. Así el pin queda en la dirección real.
+function mapEmbedSrc(link: string, label: string): string {
+  const m = link.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || link.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  const q = m ? `${m[1]},${m[2]}` : label || link;
+  return `https://maps.google.com/maps?q=${encodeURIComponent(q)}&z=16&output=embed`;
+}
+
 export function InvitationView({ content, palette, style, animate = true, edit }: InvitationViewProps) {
   const anim = normalizeAnim(content.animationKey);
   const on = animate && anim !== "ninguna";
@@ -33,10 +46,11 @@ export function InvitationView({ content, palette, style, animate = true, edit }
     "--c-band": palette.band,
     "--c-fh": font.head,
     "--c-fb": font.body,
+    "--c-fw": content.headingWeight || "700",
     fontFamily: "var(--c-fb)",
   } as CSSProperties;
 
-  const head = "[font-family:var(--c-fh)]";
+  const head = "[font-family:var(--c-fh)] [font-weight:var(--c-fw)]";
   const sections = content.sections?.length ? content.sections : DEFAULT_SECTIONS;
 
   const render = (id: SectionId) => {
@@ -89,7 +103,27 @@ export function InvitationView({ content, palette, style, animate = true, edit }
                 </div>
               </dl>
               {content.locationLabel &&
-                (content.locationLink ? (
+                (isMapLink(content.locationLink) ? (
+                  // Ubicación: mapa embebido + enlace directo a Maps.
+                  <div className="mt-8">
+                    <p className="text-2xl text-[var(--c-accent-deep)]">{content.locationLabel}</p>
+                    <iframe
+                      title="Mapa de la ubicación"
+                      src={mapEmbedSrc(content.locationLink, content.locationLabel)}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      className="mt-4 h-64 w-full rounded-2xl border-4 border-[var(--c-surface)] shadow-lg"
+                    />
+                    <a
+                      href={content.locationLink}
+                      target="_blank"
+                      rel="noopener"
+                      className="mt-4 inline-block rounded-full bg-[var(--c-text)] px-8 py-4 text-lg font-semibold text-[var(--c-bg)] transition hover:bg-[var(--c-accent-deep)]"
+                    >
+                      Cómo llegar
+                    </a>
+                  </div>
+                ) : content.locationLink ? (
                   <a
                     href={content.locationLink}
                     target="_blank"
@@ -311,7 +345,7 @@ function Hero({
       <div className="absolute inset-0 bg-black/40" />
       <Reveal anim={rev} className="relative px-6 text-white drop-shadow-lg">
         <p className="text-sm uppercase tracking-[0.35em]">{content.title}</p>
-        <h1 className={`${head} mt-4 text-5xl font-bold sm:text-7xl`}>{names}</h1>
+        <h1 className={`${head} mt-4 text-5xl sm:text-7xl`}>{names}</h1>
       </Reveal>
     </header>
   );

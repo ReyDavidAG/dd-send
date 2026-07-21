@@ -14,6 +14,18 @@ const commonFields = (): Field[] => [
   { name: "paletteKey", label: "Paleta de colores", type: "palette" },
   { name: "fontKey", label: "Tipografía", type: "font" },
   {
+    name: "headingWeight",
+    label: "Grosor de títulos",
+    type: "select",
+    options: [
+      { value: "400", label: "Normal" },
+      { value: "600", label: "Seminegrita" },
+      { value: "700", label: "Negrita" },
+      { value: "800", label: "Extra negrita" },
+    ],
+    help: "Las fuentes manuscritas pueden ignorar el grosor.",
+  },
+  {
     name: "animationKey",
     label: "Animaciones",
     type: "animation",
@@ -35,9 +47,15 @@ const commonFields = (): Field[] => [
   { name: "eventDateLabel", label: "Fecha (texto visible)", type: "text", required: true },
   { name: "eventDate", label: "Fecha y hora exacta", type: "date", required: true, help: "Para la cuenta regresiva" },
   { name: "locationLabel", label: "Lugar / plataforma", type: "text" },
-  { name: "locationLink", label: "Enlace (opcional)", type: "text", help: "Videollamada, mapa, etc." },
+  {
+    name: "locationLink",
+    label: "Enlace (opcional)",
+    type: "text",
+    placeholder: "https://maps.google.com/?q=Salón+Las+Palmas",
+    help: "Pega un enlace de Google Maps (se mostrará el mapa) o de videollamada (Meet, Zoom…).",
+  },
   { name: "photos", label: "Fotos", type: "photos" },
-  { name: "rsvpWhatsapp", label: "WhatsApp para confirmar", type: "tel", help: "Con lada, solo dígitos" },
+  { name: "rsvpWhatsapp", label: "WhatsApp para confirmar", type: "phone", help: "Con lada; a este número llegan las confirmaciones." },
   { name: "rsvpMessage", label: "Mensaje de confirmación", type: "text" },
 ];
 
@@ -51,6 +69,7 @@ const STYLES: Record<string, TemplateStyle> = {
 const sample = (over: Partial<InvitationContent>): InvitationContent => ({
   sections: DEFAULT_SECTIONS.map((s) => ({ ...s })),
   fontKey: "romantica",
+  headingWeight: "700",
   animationKey: "fade",
   headline: "David & Denisse",
   title: "Para ti",

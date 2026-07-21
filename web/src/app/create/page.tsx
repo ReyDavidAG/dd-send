@@ -1,16 +1,11 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireUserId } from "@/lib/auth";
 import { allTemplates } from "@/templates/registry";
 import { MiniPreview } from "@/components/MiniPreview";
 
 // Selector de plantilla (incluye "En blanco"). Punto único de entrada al editor.
 export default async function CreatePicker() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  await requireUserId();
 
   return (
     <main className="flex-1">
