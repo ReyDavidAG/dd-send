@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 import { motion } from "motion/react";
 import { InvitationView } from "@/templates/InvitationView";
-import { createClient } from "@/lib/supabase/client";
 import { saveDraft } from "@/app/actions/invitations";
+import { uploadPhoto } from "@/app/actions/photos";
 import { PayButton } from "@/components/PayButton";
 import { FONTS } from "@/templates/fonts";
 import { ANIMATION_LIST, demoAnimate, normalizeAnim } from "@/templates/animations";
@@ -42,7 +42,6 @@ type Props = {
   style: TemplateStyle;
   initial: InvitationContent;
   initialId?: string;
-  userId: string;
 };
 
 export function CreateEditor({
@@ -53,7 +52,6 @@ export function CreateEditor({
   style,
   initial,
   initialId,
-  userId,
 }: Props) {
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -233,7 +231,7 @@ export function CreateEditor({
                   ))}
                 </select>
               ) : f.type === "photos" ? (
-                <PhotosField value={content.photos} userId={userId} onChange={(urls) => set("photos", urls)} />
+                <PhotosField value={content.photos} onChange={(urls) => set("photos", urls)} />
               ) : (
                 <input
                   type={f.type === "date" ? "datetime-local" : f.type === "tel" ? "tel" : "text"}
@@ -334,15 +332,12 @@ function AnimationField({ value, onChange }: { value: string; onChange: (k: stri
 function PhotosField({
   value,
   onChange,
-  userId,
 }: {
   value: string[];
   onChange: (urls: string[]) => void;
-  userId: string;
 }) {
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const supabase = createClient();
 
   async function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
@@ -351,14 +346,14 @@ function PhotosField({
     setErr(null);
     const urls: string[] = [];
     for (const f of files) {
-      const safe = f.name.replace(/[^\w.-]/g, "_");
-      const path = `${userId}/${crypto.randomUUID()}-${safe}`;
-      const { error } = await supabase.storage.from("invitation-photos").upload(path, f);
-      if (error) {
-        setErr(error.message);
-        continue;
+      try {
+        const fd = new FormData();
+        fd.append("file", f);
+        const { url } = await uploadPhoto(fd); // Server Action (service-role + sesión Auth0)
+        urls.push(url);
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : "No se pudo subir la foto.");
       }
-      urls.push(supabase.storage.from("invitation-photos").getPublicUrl(path).data.publicUrl);
     }
     onChange([...value, ...urls]);
     setUploading(false);

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mpPreference } from "@/lib/mercadopago";
 import { offerPriceCents } from "@/lib/pricing";
@@ -10,12 +10,9 @@ export async function POST(request: Request) {
   const { invitationId } = await request.json().catch(() => ({}));
   if (!invitationId) return NextResponse.json({ error: "Falta invitationId" }, { status: 400 });
 
-  // 1) Verificar sesión.
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  // 1) Verificar sesión (Auth0).
+  const user = await getSessionUser();
+  if (!user?.sub) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
 
   // 2) Verificar propiedad + estado con service-role.
   const admin = createAdminClient();
@@ -25,7 +22,7 @@ export async function POST(request: Request) {
     .eq("id", invitationId)
     .single();
 
-  if (!inv || inv.user_id !== user.id)
+  if (!inv || inv.user_id !== user.sub)
     return NextResponse.json({ error: "Invitación no encontrada" }, { status: 404 });
   if (inv.status === "active")
     return NextResponse.json({ error: "La invitación ya está activa" }, { status: 409 });
@@ -60,7 +57,7 @@ export async function POST(request: Request) {
   // 4) Registrar pago (pending) y marcar la invitación.
   await admin.from("payments").insert({
     invitation_id: inv.id,
-    user_id: user.id,
+    user_id: user.sub,
     provider: "mercadopago",
     mp_preference_id: pref.id,
     amount: price,

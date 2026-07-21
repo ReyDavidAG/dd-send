@@ -159,7 +159,7 @@ function HeroText({ hasUser }: { hasUser: boolean }) {
       </p>
       <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
         <Link
-          href={hasUser ? "/create" : "/register"}
+          href={hasUser ? "/create" : "/auth/login?screen_hint=signup"}
           className="w-full rounded-full bg-coral px-8 py-4 text-lg font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-coral-deep sm:w-auto"
         >
           Crear mi invitación

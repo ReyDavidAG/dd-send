@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { signOut } from "@/app/auth/actions";
+import { requireUserId, getSessionUser } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { MAX_DRAFTS } from "@/lib/limits";
 import { PayButton } from "@/components/PayButton";
 import { DeleteDraftButton } from "@/components/DeleteDraftButton";
@@ -26,15 +25,14 @@ function badge(status: string, expiresAt: string | null) {
 }
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const uid = await requireUserId();
+  const user = await getSessionUser();
 
-  const { data } = await supabase
+  const admin = createAdminClient();
+  const { data } = await admin
     .from("invitations")
     .select("id, slug, status, expires_at, content, templates(key, name)")
+    .eq("user_id", uid)
     .order("created_at", { ascending: false });
   const invitations = (data ?? []) as unknown as Row[];
   const draftCount = invitations.filter((i) => i.status === "draft").length;
@@ -47,12 +45,10 @@ export default async function DashboardPage() {
           DD-Send
         </Link>
         <div className="flex items-center gap-4 text-sm">
-          <span className="hidden text-ink/60 sm:inline">{user.email}</span>
-          <form action={signOut}>
-            <button type="submit" className="font-semibold text-coral-deep">
-              Cerrar sesión
-            </button>
-          </form>
+          <span className="hidden text-ink/60 sm:inline">{user?.email}</span>
+          <a href="/auth/logout" className="font-semibold text-coral-deep">
+            Cerrar sesión
+          </a>
         </div>
       </header>
 
