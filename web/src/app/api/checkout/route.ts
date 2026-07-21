@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mpPreference } from "@/lib/mercadopago";
+import { offerPriceCents } from "@/lib/pricing";
 
 // Crea la preferencia de Checkout Pro para una invitación y la marca
 // pending_payment. Devuelve la URL de pago.
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
 
   const tpl = inv.templates as unknown as { name: string; base_price: number; currency: string };
   const site = process.env.NEXT_PUBLIC_SITE_URL!;
+  const price = offerPriceCents(tpl.base_price); // aplica oferta de lanzamiento
 
   // 3) Crear preferencia de Mercado Pago.
   const pref = await mpPreference().create({
@@ -40,7 +42,7 @@ export async function POST(request: Request) {
           id: inv.template_id,
           title: `Invitación · ${tpl.name}`,
           quantity: 1,
-          unit_price: tpl.base_price / 100, // centavos → unidades
+          unit_price: price / 100, // centavos → unidades
           currency_id: tpl.currency,
         },
       ],
@@ -61,7 +63,7 @@ export async function POST(request: Request) {
     user_id: user.id,
     provider: "mercadopago",
     mp_preference_id: pref.id,
-    amount: tpl.base_price,
+    amount: price,
     currency: tpl.currency,
     status: "pending",
   });
