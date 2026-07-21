@@ -56,7 +56,7 @@ export default async function DashboardPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold sm:text-3xl">Mis invitaciones</h1>
           <Link
-            href="/#plantillas"
+            href="/create"
             className="rounded-full bg-coral px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-coral-deep"
           >
             + Nueva
@@ -66,7 +66,7 @@ export default async function DashboardPage() {
         {invitations.length === 0 ? (
           <p className="mt-16 text-center text-ink/60">
             Aún no tienes invitaciones.{" "}
-            <Link href="/#plantillas" className="font-semibold text-coral-deep underline">
+            <Link href="/create" className="font-semibold text-coral-deep underline">
               Crea la primera
             </Link>
             .

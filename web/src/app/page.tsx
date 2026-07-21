@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { MiniPreview } from "@/components/MiniPreview";
 
 const mxn = (cents: number) =>
   (cents / 100).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
@@ -70,7 +71,7 @@ export default async function Home() {
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              href={user ? "/dashboard" : "/register"}
+              href={user ? "/create" : "/register"}
               className="w-full rounded-full bg-white px-8 py-4 text-lg font-semibold text-coral-deep shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl sm:w-auto"
             >
               Crear mi invitación
@@ -118,8 +119,8 @@ export default async function Home() {
               style={{ animationDelay: `${i * 0.08}s` }}
               className="dd-fade-up group flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-line transition hover:-translate-y-1 hover:shadow-lg"
             >
-              <div className="dd-gradient flex h-32 items-center justify-center text-4xl">
-                {t.category === "boda" ? "💍" : t.category === "cumpleanos" ? "🎉" : "💕"}
+              <div className="border-b border-line">
+                <MiniPreview templateKey={t.key} />
               </div>
               <div className="flex flex-1 flex-col p-6">
                 <p className="text-xs uppercase tracking-widest text-coral">{t.category}</p>
