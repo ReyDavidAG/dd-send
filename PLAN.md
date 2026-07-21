@@ -298,6 +298,8 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
 4. Storage: correr `web/supabase/migrations/0002_storage.sql` en el SQL Editor
    (crea el bucket público `invitation-photos` + políticas por dueño). Ya no hay
    que crearlo a mano.
+4b. Correr `web/supabase/migrations/0003_blank_template.sql` (plantilla "en
+   blanco"; sin ella, guardar/pagar una invitación en blanco falla).
 5. Mercado Pago y su webhook se configuran en Fase 5.
 6. **Login con Google (OAuth)** — para que el botón funcione:
    - Supabase → Authentication → Providers → **Google**: activar y pegar
@@ -365,3 +367,11 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
   mostrar/ocultar/reordenar, edición de borrador existente (`?id`), feedback de
   guardado (spinner + "✓ Guardado"). Build limpio; smoke test OK. Pendiente
   manual: `SUPABASE_SERVICE_ROLE_KEY` + credenciales MP + URL de webhook (§12.7).
+- **2026-07-20** — Iteración de plantillas/UX. Librería compartida de 14
+  paletas para todas las plantillas. Plantillas ahora **visualmente distintas**
+  vía `TemplateStyle` (tipografías Playfair/Poppins/Great Vibes + variantes de
+  hero: photo/split/festive). Selector `/create` con **mini-previews en vivo** e
+  incluye **"En blanco"** (`0003_blank_template.sql`, `is_active=false`). Landing
+  y dashboard usan `MiniPreview`. Editor: al enfocar un campo, el preview
+  (desktop) **se desliza a la sección** correspondiente; enlace "Cambiar
+  plantilla". Build y smoke test OK (heroes distintos por plantilla verificados).
