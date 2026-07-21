@@ -80,51 +80,58 @@ export default async function DashboardPage() {
             .
           </p>
         ) : (
-          <ul className="mt-8 space-y-3">
+          <ul className="mt-8 space-y-4">
             {invitations.map((inv) => {
               const b = badge(inv.status, inv.expires_at);
               const isActive = b.label === "Activa";
               const editable = inv.status !== "active";
+              const title = inv.content?.title || inv.templates?.name || "Invitación";
               return (
                 <li
                   key={inv.id}
-                  className="flex flex-col gap-3 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-line sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-line sm:flex-row sm:items-center"
                 >
-                  <div>
-                    <p className="font-semibold">{inv.content?.title || inv.templates?.name}</p>
+                  {inv.templates && (
+                    <div className="w-full shrink-0 overflow-hidden rounded-xl ring-1 ring-line sm:w-44">
+                      <MiniPreview
+                        templateKey={inv.templates.key}
+                        content={inv.content ?? undefined}
+                        className="h-28"
+                      />
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold">{title}</p>
                     <span className={`mt-1 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${b.cls}`}>
                       {b.label}
                     </span>
                   </div>
+
                   <div className="flex flex-wrap items-center gap-2">
                     {editable && inv.templates && (
-                      <Link
-                        href={`/create/${inv.templates.key}?id=${inv.id}`}
-                        className="rounded-full border border-line px-4 py-2 text-sm font-semibold hover:bg-sand"
-                      >
-                        Editar
+                      <Link href={`/create/${inv.templates.key}?id=${inv.id}`} className={btnGhost}>
+                        <IconEdit className="h-4 w-4" /> Editar
                       </Link>
                     )}
                     {isActive && (
-                      <Link
-                        href={`/i/${inv.slug}`}
-                        className="rounded-full border border-line px-4 py-2 text-sm font-semibold hover:bg-sand"
-                      >
-                        Ver
+                      <Link href={`/i/${inv.slug}`} className={btnGhost}>
+                        <IconEye className="h-4 w-4" /> Ver
                       </Link>
                     )}
-                    {inv.status !== "active" && (
+                    {editable && (
                       <PayButton
                         invitationId={inv.id}
-                        className="rounded-full bg-coral px-4 py-2 text-sm font-semibold text-white transition hover:bg-coral-deep disabled:opacity-60"
+                        className={`${btnBase} bg-coral text-white hover:bg-coral-deep disabled:opacity-60`}
                       >
-                        Pagar y publicar
+                        <IconPay className="h-4 w-4" /> Pagar y publicar
                       </PayButton>
                     )}
                     {editable && (
                       <DeleteDraftButton
                         id={inv.id}
-                        className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-coral-deep transition hover:bg-lilac disabled:opacity-60"
+                        name={title}
+                        className={`${btnBase} border border-line text-coral-deep hover:bg-lilac`}
                       />
                     )}
                   </div>

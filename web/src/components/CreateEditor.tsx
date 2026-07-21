@@ -5,7 +5,10 @@ import { useRef, useState, useTransition } from "react";
 import { motion } from "motion/react";
 import { InvitationView } from "@/templates/InvitationView";
 import { saveDraft } from "@/app/actions/invitations";
-import { uploadPhoto } from "@/app/actions/photos";
+import { uploadPhoto, deletePhoto } from "@/app/actions/photos";
+import { PhoneInput } from "@/components/PhoneInput";
+import { DateTimeField } from "@/components/DateTimeField";
+import { IconArrowLeft, IconLayout } from "@/components/icons";
 import { PayButton } from "@/components/PayButton";
 import { FONTS } from "@/templates/fonts";
 import { ANIMATION_LIST, demoAnimate, normalizeAnim } from "@/templates/animations";
@@ -109,12 +112,18 @@ export function CreateEditor({
     <div className="flex flex-1 flex-col">
       {/* Barra superior */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-white px-5 py-3">
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="text-sm text-ink/60 hover:text-ink">
-            ← Salir
+        <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-semibold hover:bg-sand"
+          >
+            <IconArrowLeft className="h-4 w-4" /> Salir
           </Link>
-          <Link href="/create" className="text-sm text-ink/60 hover:text-ink">
-            Cambiar plantilla
+          <Link
+            href="/create"
+            className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-semibold hover:bg-sand"
+          >
+            <IconLayout className="h-4 w-4" /> Cambiar plantilla
           </Link>
         </div>
         <span className="order-last w-full truncate text-center text-sm font-semibold sm:order-none sm:w-auto">
@@ -230,16 +239,16 @@ export function CreateEditor({
                     </option>
                   ))}
                 </select>
+              ) : f.type === "phone" ? (
+                <PhoneInput value={content[f.name] as string} onChange={(v) => set(f.name, v)} />
+              ) : f.type === "date" ? (
+                <DateTimeField value={content[f.name] as string} onChange={(v) => set(f.name, v)} />
               ) : f.type === "photos" ? (
                 <PhotosField value={content.photos} onChange={(urls) => set("photos", urls)} />
               ) : (
                 <input
-                  type={f.type === "date" ? "datetime-local" : f.type === "tel" ? "tel" : "text"}
-                  value={
-                    f.type === "date"
-                      ? (content[f.name] as string).slice(0, 16)
-                      : (content[f.name] as string)
-                  }
+                  type={f.type === "tel" ? "tel" : "text"}
+                  value={content[f.name] as string}
                   placeholder={f.placeholder}
                   onChange={(e) => set(f.name, e.target.value)}
                   className="w-full rounded-xl border border-line px-3 py-2 outline-none focus:border-coral"
