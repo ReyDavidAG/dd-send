@@ -1,7 +1,7 @@
 # PLAN — SaaS de invitaciones personalizadas
 
 > Bitácora viva del proyecto. Se actualiza en cada cambio relevante.
-> Última actualización: 2026-07-20 · Home con animaciones scroll-driven (Motion).
+> Última actualización: 2026-07-20 · Animaciones Motion + UX de edición + endurecimiento pre-publicación.
 
 ## 1. Qué estamos construyendo
 
@@ -267,7 +267,15 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
   Dashboard lista las invitaciones con estado (borrador/pago pendiente/activa/
   expirada) y acciones (editar/ver/pagar). También: secciones mostrar/ocultar/
   reordenar en el editor + edición de borradores existentes (`?id`).
-- [ ] **Fase 7 — Deploy.** Configuración de Vercel (root dir `/web`, envs).
+- [~] **Fase 7 — Deploy.** Destino: **Vercel** (root dir `/web`, envs de §8).
+  ⚠️ **La app `/web` NO puede ir a GitHub Pages**: Pages solo sirve estáticos y
+  esta app es dinámica (Supabase Auth, Route Handlers `/api/checkout` y webhook,
+  Server Actions, SSR con cookies, secretos de entorno). GitHub Pages sigue
+  sirviendo **solo el sitio Astro de la raíz** (design reference); `/web` se
+  despliega aparte en Vercel. Pre-publicación lista: build de producción verde,
+  pagos detrás de flag (`PAYMENTS_ENABLED=false` → toast "Próximamente"), límite
+  de 2 borradores por usuario y borrado de borradores. Pendiente: crear proyecto
+  Vercel apuntando a `/web` y cargar envs.
 
 ## 10. Decisiones técnicas registradas
 - **Sin backend separado** (requerimiento): toda la lógica de servidor en
@@ -408,3 +416,27 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
   + smoke test OK (`/` 200, 48 KB; marcadores `220vh`/`sticky top-0`/
   `aria-label="Vista previa en vivo"` presentes; `/login /register
   /preview/{cita,cumpleanos,boda}` sin regresión).
+- **2026-07-20** — **Sistema de animaciones (Motion) + UX de edición**.
+  Reemplazado GSAP ScrollTrigger de las plantillas por reveals con Motion
+  `whileInView` (funcionan dentro del contenedor scrolleable del preview, cosa
+  que GSAP no hacía). Nuevo catálogo `templates/animations.ts` (6 seleccionables:
+  suave/acercar/deslizar/enfoque/voltear/elevar + ninguna) con `normalizeAnim`
+  para claves legacy (`suave`→fade, `dinamica`→zoom). Nuevo `templates/Reveal.tsx`
+  (`whileInView once:true`, respeta reduced-motion). Campo `animationKey` pasa de
+  `select` a chips animados con demo en loop (`AnimationField`). Cumpleaños: fuera
+  emojis flotantes → **confetti en `<canvas>` nativo** (`ConfettiOverlay.tsx`),
+  hero con foto de fondo + velo de paleta, headline default "Ven a mi cumpleaños".
+  Editor: controles de sección (reordenar ↑↓ / mostrar-ocultar 👁) movidos
+  **al propio preview** (`InvitationView edit={...}`, toolbar flotante + placeholder
+  con alto mínimo para secciones vacías; contenido `pointer-events-none` en edición).
+  Fotos: elegir portada ("Hacer portada" → `photos[0]`). Preview lateral sin reveal
+  (todas las secciones visibles); "Pantalla completa" = vista con animaciones.
+  Borrado hook `useScrollReveal` y keyframes CSS de emojis. Build + lint + smoke OK.
+- **2026-07-20** — **Endurecimiento pre-publicación**. Pagos detrás de
+  `PAYMENTS_ENABLED` (pricing.ts): con `false`, `PayButton` muestra toast
+  "Próximamente" sin iniciar checkout (API/webhook intactos). Límite de
+  `MAX_DRAFTS=2` borradores por usuario (validado en `saveDraft`, aviso en
+  dashboard y botón "+ Nueva" deshabilitado al tope). Nuevo `deleteInvitation`
+  (Server Action, no borra activas, `revalidatePath`) + `DeleteDraftButton`
+  (confirm). Constante `MAX_DRAFTS` en `lib/limits.ts` (los archivos "use server"
+  solo exportan funciones async). Build + lint OK.
