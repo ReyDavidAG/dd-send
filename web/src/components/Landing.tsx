@@ -1,15 +1,17 @@
 "use client";
 
 // Home: una card de preview VIAJA POR DETRÁS del contenido (fixed, z-0) durante
-// todo el scroll — se ve en los huecos/márgenes de las secciones. Al llegar al
-// final del recorrido pasa al frente (z alto) y se DESPLIEGA a pantalla completa,
-// donde se queda mostrando la plantilla. No gira ni se desvanece.
-// En móvil (<lg) no hay card fija (no hay espacio detrás del texto): se usan
-// previews en flujo normal. Respeta prefers-reduced-motion (versión estática).
+// el scroll. Al final del recorrido pasa al frente, se abre a pantalla completa
+// y se FUNDE con la invitación COMPLETA (InvitationView real, todas las secciones
+// con sus animaciones), que el usuario scrollea como si la estuviera viendo de
+// verdad. En móvil (<lg) no hay card fija: la invitación completa se muestra a
+// pantalla completa en flujo normal. Respeta prefers-reduced-motion.
 import Link from "next/link";
 import { useRef } from "react";
 import { motion, MotionConfig, useReducedMotion, useScroll, useTransform } from "motion/react";
 import { MiniPreview } from "@/components/MiniPreview";
+import { InvitationView } from "@/templates/InvitationView";
+import { getTemplate, resolvePalette } from "@/templates/registry";
 
 const mxn = (cents: number) =>
   (cents / 100).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
@@ -21,7 +23,7 @@ const steps = [
 ];
 
 const EASE = [0.22, 1, 0.36, 1] as const;
-const FEATURED = "cita"; // plantilla que viaja detrás y se abre a pantalla completa
+const FEATURED = "cita"; // plantilla que viaja detrás y se abre completa
 
 export type TemplateCard = {
   key: string;
@@ -39,9 +41,9 @@ export function Landing({ templates, hasUser }: { templates: TemplateCard[]; has
     offset: ["start start", "end end"],
   });
 
-  // La card se mantiene tamaño tarjeta (detrás, a la derecha) hasta ~0.7 del
-  // recorrido; luego se abre a pantalla completa. Pasa al frente (z) justo al
-  // empezar a abrir para que se despliegue por encima del contenido.
+  // La card se mantiene tamaño tarjeta (detrás, a la derecha) hasta ~0.7; luego
+  // se abre a pantalla completa y al final se desvanece para revelar la
+  // invitación COMPLETA que queda debajo en flujo (fusión, no "fade a nada").
   const top = useTransform(p, [0, 0.7, 1], ["16vh", "9vh", "0vh"]);
   const right = useTransform(p, [0, 0.7, 1], ["4vw", "4vw", "0vw"]);
   const width = useTransform(p, [0, 0.7, 1], ["36vw", "36vw", "100vw"]);
@@ -55,9 +57,11 @@ export function Landing({ templates, hasUser }: { templates: TemplateCard[]; has
     ["0 30px 60px -15px rgb(0 0 0 / 0.35)", "0 0 0 0 rgb(0 0 0 / 0)"],
   );
   const zIndex = useTransform(p, [0.68, 0.7], [0, 50]);
+  const cardOpacity = useTransform(p, [0.9, 1], [1, 0]);
   const hintOpacity = useTransform(p, [0, 0.12], [1, 0]);
 
-  // Versión estática (prefers-reduced-motion): sin card fija ni movimiento.
+  // Versión estática (prefers-reduced-motion): sin card fija ni movimiento; la
+  // invitación completa igual se muestra (sus reveals se autodesactivan).
   if (reduce) {
     return (
       <MotionConfig reducedMotion="user">
@@ -67,19 +71,14 @@ export function Landing({ templates, hasUser }: { templates: TemplateCard[]; has
         </section>
         <Steps />
         <Gallery templates={templates} />
-        <section aria-label="Vista previa" className="px-5 py-16">
-          <div className="mx-auto max-w-3xl overflow-hidden rounded-[24px] border-8 border-white bg-white shadow-2xl">
-            <MiniPreview templateKey={FEATURED} scale={0.5} className="h-[75vh]" />
-          </div>
-        </section>
+        <CompleteInvitation />
       </MotionConfig>
     );
   }
 
   return (
     <MotionConfig reducedMotion="user">
-      {/* Card que viaja por detrás (desktop). Empieza como la preview del hero,
-          se ve en los huecos al scrollear, y al final se abre a pantalla completa. */}
+      {/* Card que viaja por detrás (desktop) y se abre a pantalla completa. */}
       <motion.div
         aria-hidden
         className="pointer-events-none fixed box-border hidden overflow-hidden border-solid border-white bg-white lg:block"
@@ -93,18 +92,18 @@ export function Landing({ templates, hasUser }: { templates: TemplateCard[]; has
           borderWidth,
           boxShadow,
           zIndex,
+          opacity: cardOpacity,
           transformOrigin: "top right",
         }}
       >
         <MiniPreview templateKey={FEATURED} scale={0.5} className="h-full w-full" />
       </motion.div>
 
-      {/* Pista de scroll (desktop), se desvanece al empezar a bajar. */}
       <motion.div
         style={{ opacity: hintOpacity }}
         className="pointer-events-none fixed inset-x-0 bottom-6 z-40 hidden text-center text-sm font-medium text-ink/50 lg:block"
       >
-        Baja para ver la plantilla en grande ↓
+        Baja para ver la invitación completa ↓
       </motion.div>
 
       <div ref={journeyRef}>
@@ -118,17 +117,27 @@ export function Landing({ templates, hasUser }: { templates: TemplateCard[]; has
         <Steps />
         <Gallery templates={templates} />
 
-        {/* Desktop: espacio de scroll para que la card se abra a pantalla completa. */}
-        <div aria-hidden className="hidden lg:block" style={{ height: "160vh" }} />
+        {/* Desktop: espacio de scroll para que la card se abra antes de la invitación. */}
+        <div aria-hidden className="hidden lg:block" style={{ height: "120vh" }} />
       </div>
 
-      {/* Móvil: la plantilla en grande en flujo normal (no hay card fija). */}
-      <section aria-label="Vista previa" className="px-5 py-12 lg:hidden">
-        <div className="mx-auto max-w-md overflow-hidden rounded-[24px] border-8 border-white bg-white shadow-2xl">
-          <MiniPreview templateKey={FEATURED} scale={0.5} className="h-[70vh]" />
-        </div>
-      </section>
+      {/* Invitación COMPLETA (todas las secciones, animada, scrolleable). A
+          pantalla completa en cualquier tamaño. La card fija se funde con esta. */}
+      <CompleteInvitation />
     </MotionConfig>
+  );
+}
+
+// Invitación completa real (misma plantilla destacada), full-bleed y scrolleable.
+function CompleteInvitation() {
+  const def = getTemplate(FEATURED);
+  if (!def) return null;
+  const content = def.schema.defaults;
+  const palette = resolvePalette(def, content.paletteKey);
+  return (
+    <section aria-label="La invitación completa" className="relative z-10">
+      <InvitationView content={content} palette={palette} style={def.style} />
+    </section>
   );
 }
 

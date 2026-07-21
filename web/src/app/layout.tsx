@@ -24,7 +24,12 @@ export default function RootLayout({
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${poppins.variable} ${greatVibes.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      {/* Extensiones (p. ej. ColorZilla → cz-shortcut-listen) inyectan atributos
+          en <body> antes de hidratar; suppressHydrationWarning silencia ese
+          falso positivo sin afectar el resto del árbol. */}
+      <body suppressHydrationWarning className="min-h-full flex flex-col">
+        {children}
+      </body>
     </html>
   );
 }
