@@ -367,6 +367,15 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
   mostrar/ocultar/reordenar, edición de borrador existente (`?id`), feedback de
   guardado (spinner + "✓ Guardado"). Build limpio; smoke test OK. Pendiente
   manual: `SUPABASE_SERVICE_ROLE_KEY` + credenciales MP + URL de webhook (§12.7).
+- **2026-07-20** — Personalización avanzada + nueva landing. **Encabezado
+  editable** (`headline`, sin "&" fijo — soporta "Cumpleaños de Andrés").
+  **Tipografía seleccionable** (librería `FONTS`, 5 opciones). **Animaciones
+  elegibles** (suave/dinámica/ninguna) que controlan intensidad de reveals +
+  **parallax del hero** (GSAP, como el Astro). **Drag-and-drop** nativo para
+  reordenar secciones (flechas de respaldo). Nueva **landing editorial** (hero a
+  dos columnas con preview en vivo enmarcado). `TemplateStyle` ahora solo define
+  el `hero`; las fuentes son por contenido. Build y smoke test OK.
+
 - **2026-07-20** — Iteración de plantillas/UX. Librería compartida de 14
   paletas para todas las plantillas. Plantillas ahora **visualmente distintas**
   vía `TemplateStyle` (tipografías Playfair/Poppins/Great Vibes + variantes de
