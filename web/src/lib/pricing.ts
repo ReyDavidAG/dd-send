@@ -1,3 +1,8 @@
+// Pagos aún sin configurar (Mercado Pago pendiente). Con false, el botón de
+// pago muestra un toast "Próximamente" en vez de iniciar el checkout. El código
+// de pago (API + webhook) queda intacto; poner true cuando MP esté listo.
+export const PAYMENTS_ENABLED = false;
+
 // Oferta de lanzamiento: toda invitación cuesta $50 MXN plano, sin importar
 // el base_price de la plantilla. base_price queda como precio "regular" (tachado).
 // ponytail: para terminar la oferta, poné LAUNCH_OFFER = false (vuelve a base_price).

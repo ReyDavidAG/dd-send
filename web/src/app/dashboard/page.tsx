@@ -2,7 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/auth/actions";
+import { MAX_DRAFTS } from "@/lib/limits";
 import { PayButton } from "@/components/PayButton";
+import { DeleteDraftButton } from "@/components/DeleteDraftButton";
 
 type Row = {
   id: string;
@@ -35,6 +37,8 @@ export default async function DashboardPage() {
     .select("id, slug, status, expires_at, content, templates(key, name)")
     .order("created_at", { ascending: false });
   const invitations = (data ?? []) as unknown as Row[];
+  const draftCount = invitations.filter((i) => i.status === "draft").length;
+  const atLimit = draftCount >= MAX_DRAFTS;
 
   return (
     <main className="flex-1">
@@ -55,13 +59,27 @@ export default async function DashboardPage() {
       <section className="mx-auto max-w-4xl px-5 py-12">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold sm:text-3xl">Mis invitaciones</h1>
-          <Link
-            href="/create"
-            className="rounded-full bg-coral px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-coral-deep"
-          >
-            + Nueva
-          </Link>
+          {atLimit ? (
+            <span
+              className="cursor-not-allowed rounded-full bg-ink/10 px-5 py-2.5 text-sm font-semibold text-ink/50"
+              title={`Máximo ${MAX_DRAFTS} borradores. Elimina uno para crear otro.`}
+            >
+              + Nueva
+            </span>
+          ) : (
+            <Link
+              href="/create"
+              className="rounded-full bg-coral px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-coral-deep"
+            >
+              + Nueva
+            </Link>
+          )}
         </div>
+        {atLimit && (
+          <p className="mt-3 text-sm text-ink/60">
+            Llegaste al máximo de {MAX_DRAFTS} borradores. Elimina uno para crear otro.
+          </p>
+        )}
 
         {invitations.length === 0 ? (
           <p className="mt-16 text-center text-ink/60">
@@ -112,6 +130,12 @@ export default async function DashboardPage() {
                       >
                         Pagar y publicar
                       </PayButton>
+                    )}
+                    {editable && (
+                      <DeleteDraftButton
+                        id={inv.id}
+                        className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-coral-deep transition hover:bg-lilac disabled:opacity-60"
+                      />
                     )}
                   </div>
                 </li>
