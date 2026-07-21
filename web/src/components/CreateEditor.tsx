@@ -1,11 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { motion } from "motion/react";
+import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { InvitationView } from "@/templates/InvitationView";
-import { createClient } from "@/lib/supabase/client";
 import { saveDraft } from "@/app/actions/invitations";
+import { uploadPhoto, deletePhoto, listPhotos } from "@/app/actions/photos";
+import { MAX_LIBRARY, MAX_SELECTED } from "@/lib/limits";
+import { PhoneInput } from "@/components/PhoneInput";
+import { DateTimeField } from "@/components/DateTimeField";
+import { IconArrowLeft, IconLayout, IconTrash } from "@/components/icons";
 import { PayButton } from "@/components/PayButton";
 import { FONTS } from "@/templates/fonts";
 import { ANIMATION_LIST, demoAnimate, normalizeAnim } from "@/templates/animations";
@@ -42,7 +47,6 @@ type Props = {
   style: TemplateStyle;
   initial: InvitationContent;
   initialId?: string;
-  userId: string;
 };
 
 export function CreateEditor({
@@ -53,7 +57,6 @@ export function CreateEditor({
   style,
   initial,
   initialId,
-  userId,
 }: Props) {
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -108,15 +111,21 @@ export function CreateEditor({
     });
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex h-[100dvh] flex-col overflow-hidden">
       {/* Barra superior */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-white px-5 py-3">
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="text-sm text-ink/60 hover:text-ink">
-            ← Salir
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-line bg-white px-5 py-3">
+        <div className="flex items-center gap-2">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-semibold hover:bg-sand"
+          >
+            <IconArrowLeft className="h-4 w-4" /> Salir
           </Link>
-          <Link href="/create" className="text-sm text-ink/60 hover:text-ink">
-            Cambiar plantilla
+          <Link
+            href="/create"
+            className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-semibold hover:bg-sand"
+          >
+            <IconLayout className="h-4 w-4" /> Cambiar plantilla
           </Link>
         </div>
         <span className="order-last w-full truncate text-center text-sm font-semibold sm:order-none sm:w-auto">
@@ -146,7 +155,7 @@ export function CreateEditor({
       </div>
 
       {/* Tabs (solo móvil) */}
-      <div className="flex border-b border-line lg:hidden">
+      <div className="flex shrink-0 border-b border-line lg:hidden">
         {(["edit", "preview"] as const).map((t) => (
           <button
             key={t}
@@ -160,10 +169,10 @@ export function CreateEditor({
         ))}
       </div>
 
-      <div className="grid flex-1 lg:grid-cols-2">
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         {/* Formulario */}
         <div
-          className={`${tab === "edit" ? "block" : "hidden"} space-y-4 overflow-y-auto p-5 lg:block lg:max-h-[calc(100vh-57px)]`}
+          className={`${tab === "edit" ? "flex" : "hidden"} min-h-0 flex-1 flex-col space-y-4 overflow-y-auto p-5 lg:flex lg:w-1/2`}
         >
           {fields.map((f) => (
             <label
@@ -232,16 +241,16 @@ export function CreateEditor({
                     </option>
                   ))}
                 </select>
+              ) : f.type === "phone" ? (
+                <PhoneInput value={content[f.name] as string} onChange={(v) => set(f.name, v)} />
+              ) : f.type === "date" ? (
+                <DateTimeField value={content[f.name] as string} onChange={(v) => set(f.name, v)} />
               ) : f.type === "photos" ? (
-                <PhotosField value={content.photos} userId={userId} onChange={(urls) => set("photos", urls)} />
+                <PhotosField value={content.photos} onChange={(urls) => set("photos", urls)} />
               ) : (
                 <input
-                  type={f.type === "date" ? "datetime-local" : f.type === "tel" ? "tel" : "text"}
-                  value={
-                    f.type === "date"
-                      ? (content[f.name] as string).slice(0, 16)
-                      : (content[f.name] as string)
-                  }
+                  type={f.type === "tel" ? "tel" : "text"}
+                  value={content[f.name] as string}
                   placeholder={f.placeholder}
                   onChange={(e) => set(f.name, e.target.value)}
                   className="w-full rounded-xl border border-line px-3 py-2 outline-none focus:border-coral"
@@ -259,7 +268,7 @@ export function CreateEditor({
 
         {/* Vista previa */}
         <div
-          className={`${tab === "preview" ? "block" : "hidden"} relative bg-lilac/40 lg:block lg:max-h-[calc(100vh-57px)]`}
+          className={`${tab === "preview" ? "flex" : "hidden"} relative min-h-0 flex-1 bg-lilac/40 lg:flex lg:w-1/2`}
         >
           <button
             onClick={() => setFull(true)}
@@ -270,7 +279,7 @@ export function CreateEditor({
           <p className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/90 px-3 py-1 text-xs text-ink/60 shadow ring-1 ring-line backdrop-blur">
             Usa ↑↓ y 👁 sobre cada sección. «Pantalla completa» muestra las animaciones.
           </p>
-          <div ref={previewRef} className="h-[70vh] overflow-y-auto lg:h-[calc(100vh-57px)]">
+          <div ref={previewRef} className="min-h-0 w-full flex-1 overflow-y-auto">
             <InvitationView content={content} palette={palette} style={style} animate={false} edit={editControls} />
           </div>
         </div>
@@ -331,91 +340,217 @@ function AnimationField({ value, onChange }: { value: string; onChange: (k: stri
   );
 }
 
+const dedupe = (arr: string[]) => Array.from(new Set(arr));
+// Foto propia = archivo en nuestro bucket de Storage. Las default de la
+// plantilla (picsum, etc.) no lo son: se pueden quitar del ejemplo, pero no
+// "eliminar" (no hay registro que borrar) ni cuentan para el tope de galería.
+const isOwned = (url: string) => url.includes("/invitation-photos/");
+
+// Galería del usuario (hasta MAX_LIBRARY registros) + selección de esta
+// invitación (hasta MAX_SELECTED). `value` = content.photos = las seleccionadas
+// en orden; value[0] es la portada. La galería vive en Storage (listPhotos).
 function PhotosField({
   value,
   onChange,
-  userId,
 }: {
   value: string[];
   onChange: (urls: string[]) => void;
-  userId: string;
 }) {
+  const [library, setLibrary] = useState<string[]>(value);
   const [uploading, setUploading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const supabase = createClient();
+
+  // Carga inicial: los registros de Storage + las ya seleccionadas (por si el
+  // list fallara, las seleccionadas siempre deben verse).
+  useEffect(() => {
+    let alive = true;
+    listPhotos()
+      .then((urls) => alive && setLibrary((prev) => dedupe([...urls, ...prev])))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const ownedCount = library.filter(isOwned).length; // solo las subidas cuentan
+  const libFull = ownedCount >= MAX_LIBRARY;
+  const selectFull = value.length >= MAX_SELECTED;
+
+  // Selecciona/deselecciona una foto para esta invitación (máx MAX_SELECTED).
+  const toggle = (url: string) => {
+    if (value.includes(url)) onChange(value.filter((u) => u !== url));
+    else if (!selectFull) onChange([...value, url]);
+  };
+
+  // La primera seleccionada es la portada; la mueve al inicio.
+  const makeCover = (url: string) => {
+    if (value[0] === url) return;
+    onChange([url, ...value.filter((u) => u !== url)]);
+  };
 
   async function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
+    const room = MAX_LIBRARY - ownedCount;
+    const files = Array.from(e.target.files ?? []).slice(0, room);
+    e.target.value = "";
     if (!files.length) return;
     setUploading(true);
     setErr(null);
-    const urls: string[] = [];
+    const added: string[] = [];
     for (const f of files) {
-      const safe = f.name.replace(/[^\w.-]/g, "_");
-      const path = `${userId}/${crypto.randomUUID()}-${safe}`;
-      const { error } = await supabase.storage.from("invitation-photos").upload(path, f);
-      if (error) {
-        setErr(error.message);
-        continue;
+      try {
+        const fd = new FormData();
+        fd.append("file", f);
+        const { url } = await uploadPhoto(fd); // Server Action (service-role + sesión Auth0)
+        added.push(url);
+      } catch (e) {
+        setErr(e instanceof Error ? e.message : "No se pudo subir la foto.");
       }
-      urls.push(supabase.storage.from("invitation-photos").getPublicUrl(path).data.publicUrl);
     }
-    onChange([...value, ...urls]);
+    if (added.length) {
+      setLibrary((prev) => dedupe([...added, ...prev]));
+      // auto-selecciona las nuevas hasta llenar el máximo
+      const room = MAX_SELECTED - value.length;
+      if (room > 0) onChange([...value, ...added.slice(0, room)]);
+    }
     setUploading(false);
-    e.target.value = "";
   }
 
-  // La primera foto es la portada/banner (hero). "Hacer portada" la mueve al inicio.
-  const makeCover = (i: number) => {
-    if (i === 0) return;
-    const arr = [...value];
-    const [it] = arr.splice(i, 1);
-    arr.unshift(it);
-    onChange(arr);
+  // Elimina el registro propio: borra archivo + quita la URL de todas las
+  // invitaciones (deletePhoto en el server) y de la selección/galería local.
+  const removeFromLibrary = (url: string) => {
+    setLibrary((prev) => prev.filter((u) => u !== url));
+    onChange(value.filter((u) => u !== url));
+    void deletePhoto(url).catch(() => {});
+  };
+
+  // Quita una foto de ejemplo (default de la plantilla): solo local, sin server.
+  const removeExample = (url: string) => {
+    setLibrary((prev) => prev.filter((u) => u !== url));
+    onChange(value.filter((u) => u !== url));
   };
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-2">
-        {value.map((url, i) => (
-          <div key={url} className="relative">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={url}
-              alt=""
-              className={`h-20 w-16 rounded-lg object-cover ring-1 ring-line ${i === 0 ? "ring-2 ring-coral" : ""}`}
-            />
-            <button
-              type="button"
-              onClick={() => onChange(value.filter((_, j) => j !== i))}
-              className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-coral text-xs text-white"
-              aria-label="Quitar foto"
-            >
-              ×
-            </button>
-            {i === 0 ? (
-              <span className="absolute inset-x-0 bottom-0 rounded-b-lg bg-coral/90 py-0.5 text-center text-[10px] font-semibold text-white">
-                Portada
-              </span>
-            ) : (
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+        {library.map((url) => {
+          const pos = value.indexOf(url); // -1 = no seleccionada
+          const selected = pos >= 0;
+          const isCover = pos === 0;
+          const owned = isOwned(url);
+          return (
+            <div key={url} className="relative">
               <button
                 type="button"
-                onClick={() => makeCover(i)}
-                className="absolute inset-x-0 bottom-0 rounded-b-lg bg-black/55 py-0.5 text-center text-[10px] font-medium text-white transition hover:bg-black/75"
+                onClick={() => toggle(url)}
+                disabled={!selected && selectFull}
+                aria-pressed={selected}
+                className={`block w-full overflow-hidden rounded-lg ring-1 transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                  selected ? "ring-2 ring-coral" : "ring-line hover:ring-coral/50"
+                }`}
               >
-                Hacer portada
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={url} alt="" className="aspect-[3/4] w-full object-cover" />
+                {/* Indicador de selección / orden */}
+                <span
+                  className={`absolute left-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold ${
+                    selected ? "bg-coral text-white" : "bg-white/85 text-ink/40 ring-1 ring-line"
+                  }`}
+                >
+                  {selected ? pos + 1 : ""}
+                </span>
+                {!owned && !selected && (
+                  <span className="absolute bottom-1 left-1 rounded bg-ink/60 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+                    Ejemplo
+                  </span>
+                )}
               </button>
-            )}
-          </div>
-        ))}
-        <label className="grid h-20 w-16 cursor-pointer place-items-center rounded-lg border-2 border-dashed border-line text-2xl text-ink/40 hover:border-coral">
-          +
-          <input type="file" accept="image/*" multiple onChange={onFiles} disabled={uploading} className="hidden" />
-        </label>
+
+              {owned ? (
+                <PhotoDeleteButton onConfirm={() => removeFromLibrary(url)} />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => removeExample(url)}
+                  className="absolute -right-1.5 -top-1.5 z-10 grid h-6 w-6 place-items-center rounded-full bg-ink/60 text-sm text-white shadow ring-2 ring-white transition hover:bg-ink"
+                  aria-label="Quitar foto de ejemplo"
+                  title="Quitar foto de ejemplo"
+                >
+                  ×
+                </button>
+              )}
+
+              {isCover ? (
+                <span className="pointer-events-none absolute inset-x-0 bottom-0 rounded-b-lg bg-coral/90 py-0.5 text-center text-[10px] font-semibold text-white">
+                  Portada
+                </span>
+              ) : selected ? (
+                <button
+                  type="button"
+                  onClick={() => makeCover(url)}
+                  className="absolute inset-x-0 bottom-0 rounded-b-lg bg-black/55 py-0.5 text-center text-[10px] font-medium text-white transition hover:bg-black/75"
+                >
+                  Hacer portada
+                </button>
+              ) : null}
+            </div>
+          );
+        })}
+
+        {!libFull && (
+          <label className="grid aspect-[3/4] cursor-pointer place-items-center rounded-lg border-2 border-dashed border-line text-2xl text-ink/40 hover:border-coral">
+            +
+            <input type="file" accept="image/*" multiple onChange={onFiles} disabled={uploading} className="hidden" />
+          </label>
+        )}
       </div>
-      <p className="text-xs text-ink/50">La foto con borde coral es la portada. «Hacer portada» cambia cuál va de banner.</p>
+      <p className="text-xs text-ink/50">
+        Toca para elegir hasta {MAX_SELECTED} ({value.length}/{MAX_SELECTED}); la #1 es la portada.
+        Tu galería guarda hasta {MAX_LIBRARY} fotos ({ownedCount}/{MAX_LIBRARY}). Las de «ejemplo»
+        puedes quitarlas y no ocupan lugar.
+      </p>
       {uploading && <p className="text-xs text-ink/60">Subiendo…</p>}
       {err && <p className="text-xs text-coral-deep">{err}</p>}
     </div>
+  );
+}
+
+// Botón de basura sobre cada foto con confirmación (Radix AlertDialog).
+function PhotoDeleteButton({ onConfirm }: { onConfirm: () => void }) {
+  return (
+    <AlertDialog.Root>
+      <AlertDialog.Trigger
+        className="absolute -right-1.5 -top-1.5 z-10 grid h-6 w-6 place-items-center rounded-full bg-coral text-white shadow ring-2 ring-white transition hover:bg-coral-deep"
+        aria-label="Eliminar foto"
+      >
+        <IconTrash className="h-3.5 w-3.5" />
+      </AlertDialog.Trigger>
+      <AlertDialog.Portal>
+        <AlertDialog.Overlay className="dd-overlay fixed inset-0 z-50 bg-ink/40 backdrop-blur-sm" />
+        <AlertDialog.Content className="dd-content fixed left-1/2 top-1/2 z-50 w-[min(92vw,26rem)] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-2xl">
+          <div className="flex items-start gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-lilac text-coral-deep">
+              <IconTrash className="h-5 w-5" />
+            </span>
+            <div>
+              <AlertDialog.Title className="text-lg font-bold">¿Eliminar foto?</AlertDialog.Title>
+              <AlertDialog.Description className="mt-1 text-sm text-ink/60">
+                Se borra de tu galería y de cualquier invitación donde la uses. No se puede deshacer.
+              </AlertDialog.Description>
+            </div>
+          </div>
+          <div className="mt-6 flex justify-end gap-2">
+            <AlertDialog.Cancel className="rounded-full border border-line px-4 py-2 text-sm font-semibold hover:bg-sand">
+              Cancelar
+            </AlertDialog.Cancel>
+            <AlertDialog.Action
+              onClick={onConfirm}
+              className="inline-flex items-center gap-2 rounded-full bg-coral-deep px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink"
+            >
+              <IconTrash className="h-4 w-4" /> Sí, eliminar
+            </AlertDialog.Action>
+          </div>
+        </AlertDialog.Content>
+      </AlertDialog.Portal>
+    </AlertDialog.Root>
   );
 }

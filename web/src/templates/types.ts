@@ -29,6 +29,7 @@ export type AnimationKey = "ninguna" | "fade" | "zoom" | "slide" | "blur" | "fli
 export type InvitationContent = {
   sections: SectionConfig[];
   fontKey: string; // clave de FONTS
+  headingWeight: string; // peso de los títulos (400/600/700/800)
   animationKey: AnimationKey;
   headline: string; // texto grande del hero (editable; reemplaza el "&" fijo)
   toName: string;
@@ -63,7 +64,7 @@ export type Palette = {
 export type Field = {
   name: keyof InvitationContent;
   label: string;
-  type: "text" | "textarea" | "date" | "tel" | "photos" | "palette" | "font" | "select" | "animation";
+  type: "text" | "textarea" | "date" | "tel" | "phone" | "photos" | "palette" | "font" | "select" | "animation";
   required?: boolean;
   placeholder?: string;
   help?: string;

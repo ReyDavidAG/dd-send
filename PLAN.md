@@ -440,3 +440,26 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
   (Server Action, no borra activas, `revalidatePath`) + `DeleteDraftButton`
   (confirm). Constante `MAX_DRAFTS` en `lib/limits.ts` (los archivos "use server"
   solo exportan funciones async). Build + lint OK.
+
+## 13. Migración de autenticación: Supabase Auth → Auth0
+- **Rama:** `feature/auth0-migration` (desde `develop`).
+- **Qué cambia:** la autenticación pasa a **Auth0** (`@auth0/nextjs-auth0`, NO el
+  `@auth0/auth0-react` del ejemplo SPA). **Supabase queda solo como BD + Storage.**
+- **Por qué:** el free de Auth0 da más opciones (Google/social OAuth sin fricción,
+  gestión de usuarios/roles).
+- **Integración (Opción A — elegida):** todo el acceso a datos va por el servidor
+  Next (Server Actions / Route Handlers) con la **service-role key**, validando la
+  sesión de Auth0 y filtrando por el **`sub`** (userId de Auth0). El navegador no
+  habla directo con Supabase. RLS por `auth.uid()` se relaja (el servidor es el
+  guardián); el `sub` de Auth0 pasa a ser el `user_id` (texto) en las tablas.
+- **Archivos a borrar:** `app/auth/actions.ts`, `app/auth/callback/route.ts`,
+  `app/auth/confirm/route.ts`, `app/login/page.tsx`, `app/register/page.tsx`,
+  `proxy.ts`, `lib/supabase/client.ts`.
+- **A modificar:** `lib/supabase/server.ts` (→ service-role), `actions/invitations.ts`,
+  `api/checkout/route.ts`, `dashboard`/`create`/`page.tsx` (usuario desde Auth0),
+  `CreateEditor` (subida de fotos vía Server Action), `.env`, `package.json`.
+- **Migración `0004_auth0.sql`:** `invitations.user_id`/`payments.user_id`
+  `uuid`→`text`, quitar FKs a `auth.users`, quitar `profiles`+trigger, relajar RLS.
+- **Prerrequisito manual:** crear tenant + Application (Regular Web App) en Auth0,
+  configurar Allowed Callback/Logout URLs, y cargar envs
+  (`AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET`, `AUTH0_SECRET`, `APP_BASE_URL`).
