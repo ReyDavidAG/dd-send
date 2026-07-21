@@ -12,9 +12,7 @@ import { motion, MotionConfig, useReducedMotion, useScroll, useTransform } from 
 import { MiniPreview } from "@/components/MiniPreview";
 import { InvitationView } from "@/templates/InvitationView";
 import { getTemplate, resolvePalette } from "@/templates/registry";
-
-const mxn = (cents: number) =>
-  (cents / 100).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
+import { LAUNCH_OFFER, mxn, offerPriceCents } from "@/lib/pricing";
 
 const steps = [
   { n: "1", t: "Elige plantilla", d: "Diseños animados listos, o empieza en blanco." },
@@ -235,17 +233,29 @@ function Gallery({ templates }: { templates: TemplateCard[] }) {
           >
             <Link
               href={`/create/${t.key}`}
-              className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-line transition hover:-translate-y-1 hover:shadow-lg"
+              className="group flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-line transition hover:-translate-y-1 hover:shadow-lg"
             >
-              <div className="border-b border-line">
-                <MiniPreview templateKey={t.key} />
+              <div className="relative border-b border-line">
+                {LAUNCH_OFFER && (
+                  <span className="absolute left-3 top-3 z-10 rounded-full bg-coral px-3 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-md">
+                    Oferta de lanzamiento
+                  </span>
+                )}
+                <MiniPreview templateKey={t.key} className="h-44" />
               </div>
               <div className="flex flex-1 flex-col p-5">
                 <p className="text-xs uppercase tracking-widest text-coral">{t.category}</p>
                 <h3 className="mt-1 text-xl font-semibold">{t.name}</h3>
                 <p className="mt-2 flex-1 text-sm text-ink/70">{t.description}</p>
                 <div className="mt-4 flex items-center justify-between">
-                  <span className="font-semibold">{mxn(t.base_price)}</span>
+                  <span className="flex items-baseline gap-2">
+                    <span className="text-lg font-bold text-coral-deep">
+                      {mxn(offerPriceCents(t.base_price))}
+                    </span>
+                    {LAUNCH_OFFER && (
+                      <span className="text-sm text-ink/40 line-through">{mxn(t.base_price)}</span>
+                    )}
+                  </span>
                   <span className="text-sm font-semibold text-coral-deep group-hover:underline">
                     Personalizar →
                   </span>
