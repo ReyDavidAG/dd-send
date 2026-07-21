@@ -24,7 +24,7 @@ export const DEFAULT_SECTIONS: SectionConfig[] = [
 
 // Contenido que el usuario llena y se guarda en invitations.content (jsonb).
 // Es un superset que cubre las 3 plantillas del MVP.
-export type AnimationKey = "suave" | "dinamica" | "ninguna";
+export type AnimationKey = "ninguna" | "fade" | "zoom" | "slide" | "blur" | "flip" | "rise";
 
 export type InvitationContent = {
   sections: SectionConfig[];
@@ -63,7 +63,7 @@ export type Palette = {
 export type Field = {
   name: keyof InvitationContent;
   label: string;
-  type: "text" | "textarea" | "date" | "tel" | "photos" | "palette" | "font" | "select";
+  type: "text" | "textarea" | "date" | "tel" | "photos" | "palette" | "font" | "select" | "animation";
   required?: boolean;
   placeholder?: string;
   help?: string;
@@ -82,11 +82,19 @@ export type TemplateStyle = {
   hero: "photo" | "split" | "festive";
 };
 
+// Controles de edición sobre el propio preview (reordenar / mostrar-ocultar
+// secciones). Solo se pasan desde el editor; en la invitación publicada no.
+export type EditControls = {
+  onMove: (id: SectionId, dir: -1 | 1) => void;
+  onToggle: (id: SectionId) => void;
+};
+
 export type InvitationViewProps = {
   content: InvitationContent;
   palette: Palette;
   style: TemplateStyle;
   animate?: boolean;
+  edit?: EditControls;
 };
 
 export type TemplateDef = {

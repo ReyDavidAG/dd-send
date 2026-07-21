@@ -2,17 +2,17 @@
 
 import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
+import { motion } from "motion/react";
 import { InvitationView } from "@/templates/InvitationView";
 import { createClient } from "@/lib/supabase/client";
 import { saveDraft } from "@/app/actions/invitations";
 import { PayButton } from "@/components/PayButton";
 import { FONTS } from "@/templates/fonts";
+import { ANIMATION_LIST, demoAnimate, normalizeAnim } from "@/templates/animations";
 import {
-  SECTION_LABELS,
   type Field,
   type InvitationContent,
   type Palette,
-  type SectionConfig,
   type SectionId,
   type TemplateStyle,
 } from "@/templates/types";
@@ -76,6 +76,23 @@ export function CreateEditor({
   const palette = palettes.find((p) => p.key === content.paletteKey) ?? palettes[0];
   const set = (name: keyof InvitationContent, value: unknown) =>
     setContent((c) => ({ ...c, [name]: value }) as InvitationContent);
+
+  // Controles de secciones directamente sobre el preview.
+  const moveSection = (id: SectionId, dir: -1 | 1) =>
+    setContent((c) => {
+      const i = c.sections.findIndex((s) => s.id === id);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= c.sections.length) return c;
+      const arr = [...c.sections];
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+      return { ...c, sections: arr };
+    });
+  const toggleSection = (id: SectionId) =>
+    setContent((c) => ({
+      ...c,
+      sections: c.sections.map((s) => (s.id === id ? { ...s, visible: !s.visible } : s)),
+    }));
+  const editControls = { onMove: moveSection, onToggle: toggleSection };
 
   const onSave = () =>
     startTransition(async () => {
@@ -148,11 +165,6 @@ export function CreateEditor({
         <div
           className={`${tab === "edit" ? "block" : "hidden"} space-y-4 overflow-y-auto p-5 lg:block lg:max-h-[calc(100vh-57px)]`}
         >
-          <SectionsEditor
-            sections={content.sections}
-            onChange={(s) => set("sections", s)}
-          />
-
           {fields.map((f) => (
             <label
               key={f.name}
@@ -203,6 +215,11 @@ export function CreateEditor({
                     </button>
                   ))}
                 </div>
+              ) : f.type === "animation" ? (
+                <AnimationField
+                  value={normalizeAnim(content.animationKey)}
+                  onChange={(k) => set("animationKey", k)}
+                />
               ) : f.type === "select" ? (
                 <select
                   value={content[f.name] as string}
@@ -246,12 +263,15 @@ export function CreateEditor({
         >
           <button
             onClick={() => setFull(true)}
-            className="absolute right-3 top-3 z-10 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold shadow ring-1 ring-line backdrop-blur"
+            className="absolute left-3 top-3 z-40 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold shadow ring-1 ring-line backdrop-blur"
           >
             ⛶ Pantalla completa
           </button>
+          <p className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/90 px-3 py-1 text-xs text-ink/60 shadow ring-1 ring-line backdrop-blur">
+            Usa ↑↓ y 👁 sobre cada sección. «Pantalla completa» muestra las animaciones.
+          </p>
           <div ref={previewRef} className="h-[70vh] overflow-y-auto lg:h-[calc(100vh-57px)]">
-            <InvitationView content={content} palette={palette} style={style} animate={false} />
+            <InvitationView content={content} palette={palette} style={style} animate={false} edit={editControls} />
           </div>
         </div>
       </div>
@@ -264,92 +284,49 @@ export function CreateEditor({
           >
             ✕ Cerrar
           </button>
-          <InvitationView content={content} palette={palette} style={style} animate={false} />
+          <InvitationView content={content} palette={palette} style={style} />
         </div>
       )}
     </div>
   );
 }
 
-function SectionsEditor({
-  sections,
-  onChange,
-}: {
-  sections: SectionConfig[];
-  onChange: (s: SectionConfig[]) => void;
-}) {
-  const dragFrom = useRef<number | null>(null);
-  const [over, setOver] = useState<number | null>(null);
-
-  const move = (i: number, dir: -1 | 1) => {
-    const j = i + dir;
-    if (j < 0 || j >= sections.length) return;
-    const arr = [...sections];
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-    onChange(arr);
-  };
-  const toggle = (i: number) =>
-    onChange(sections.map((s, k) => (k === i ? { ...s, visible: !s.visible } : s)));
-  const drop = (to: number) => {
-    const from = dragFrom.current;
-    dragFrom.current = null;
-    setOver(null);
-    if (from === null || from === to) return;
-    const arr = [...sections];
-    const [it] = arr.splice(from, 1);
-    arr.splice(to, 0, it);
-    onChange(arr);
+// Selector de animación por chips: cada chip muestra una figura repitiendo la
+// animación en loop (demoAnimate deriva los keyframes de las variants).
+function AnimationField({ value, onChange }: { value: string; onChange: (k: string) => void }) {
+  const chip = (key: string, name: string, node: React.ReactNode) => {
+    const active = value === key;
+    return (
+      <button
+        key={key}
+        type="button"
+        onClick={() => onChange(key)}
+        className={`flex flex-col items-center gap-2 rounded-xl border px-2 py-3 text-xs font-medium transition ${
+          active ? "border-coral ring-2 ring-coral/30" : "border-line hover:border-coral/50"
+        }`}
+      >
+        <span className="grid h-10 w-full place-items-center overflow-hidden rounded-lg bg-lilac/40">
+          {node}
+        </span>
+        {name}
+      </button>
+    );
   };
 
   return (
-    <div className="rounded-xl border border-line p-3">
-      <p className="text-sm font-semibold">Secciones</p>
-      <p className="text-xs text-ink/50">Arrastra para reordenar; marca para mostrar/ocultar.</p>
-      <ul className="mt-2 space-y-1">
-        {sections.map((s, i) => (
-          <li
-            key={s.id}
-            draggable
-            onDragStart={() => (dragFrom.current = i)}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setOver(i);
-            }}
-            onDrop={() => drop(i)}
-            className={`flex items-center justify-between gap-2 rounded-lg bg-sand px-3 py-2 ${
-              over === i ? "ring-2 ring-coral/40" : ""
-            }`}
-          >
-            <label className="flex items-center gap-2 text-sm">
-              <span className="cursor-grab select-none text-ink/40" aria-hidden>
-                ⠿
-              </span>
-              <input type="checkbox" checked={s.visible} onChange={() => toggle(i)} />
-              {SECTION_LABELS[s.id]}
-            </label>
-            <span className="flex gap-1">
-              <button
-                type="button"
-                onClick={() => move(i, -1)}
-                disabled={i === 0}
-                className="grid h-7 w-7 place-items-center rounded-lg border border-line disabled:opacity-30"
-                aria-label="Subir"
-              >
-                ↑
-              </button>
-              <button
-                type="button"
-                onClick={() => move(i, 1)}
-                disabled={i === sections.length - 1}
-                className="grid h-7 w-7 place-items-center rounded-lg border border-line disabled:opacity-30"
-                aria-label="Bajar"
-              >
-                ↓
-              </button>
-            </span>
-          </li>
-        ))}
-      </ul>
+    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+      {ANIMATION_LIST.map((a) =>
+        chip(
+          a.key,
+          a.name,
+          <motion.span
+            className="h-5 w-5 rounded bg-coral/80"
+            animate={demoAnimate(a)}
+            transition={{ duration: 0.8, repeat: Infinity, repeatType: "reverse", repeatDelay: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          />,
+        ),
+      )}
+      {chip("ninguna", "Sin animación", <span className="h-5 w-5 rounded bg-coral/50" />)}
     </div>
   );
 }
@@ -388,13 +365,26 @@ function PhotosField({
     e.target.value = "";
   }
 
+  // La primera foto es la portada/banner (hero). "Hacer portada" la mueve al inicio.
+  const makeCover = (i: number) => {
+    if (i === 0) return;
+    const arr = [...value];
+    const [it] = arr.splice(i, 1);
+    arr.unshift(it);
+    onChange(arr);
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">
         {value.map((url, i) => (
           <div key={url} className="relative">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={url} alt="" className="h-20 w-16 rounded-lg object-cover ring-1 ring-line" />
+            <img
+              src={url}
+              alt=""
+              className={`h-20 w-16 rounded-lg object-cover ring-1 ring-line ${i === 0 ? "ring-2 ring-coral" : ""}`}
+            />
             <button
               type="button"
               onClick={() => onChange(value.filter((_, j) => j !== i))}
@@ -403,6 +393,19 @@ function PhotosField({
             >
               ×
             </button>
+            {i === 0 ? (
+              <span className="absolute inset-x-0 bottom-0 rounded-b-lg bg-coral/90 py-0.5 text-center text-[10px] font-semibold text-white">
+                Portada
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => makeCover(i)}
+                className="absolute inset-x-0 bottom-0 rounded-b-lg bg-black/55 py-0.5 text-center text-[10px] font-medium text-white transition hover:bg-black/75"
+              >
+                Hacer portada
+              </button>
+            )}
           </div>
         ))}
         <label className="grid h-20 w-16 cursor-pointer place-items-center rounded-lg border-2 border-dashed border-line text-2xl text-ink/40 hover:border-coral">
@@ -410,6 +413,7 @@ function PhotosField({
           <input type="file" accept="image/*" multiple onChange={onFiles} disabled={uploading} className="hidden" />
         </label>
       </div>
+      <p className="text-xs text-ink/50">La foto con borde coral es la portada. «Hacer portada» cambia cuál va de banner.</p>
       {uploading && <p className="text-xs text-ink/60">Subiendo…</p>}
       {err && <p className="text-xs text-coral-deep">{err}</p>}
     </div>

@@ -16,12 +16,8 @@ const commonFields = (): Field[] => [
   {
     name: "animationKey",
     label: "Animaciones",
-    type: "select",
-    options: [
-      { value: "suave", label: "Suaves" },
-      { value: "dinamica", label: "Dinámicas" },
-      { value: "ninguna", label: "Sin animación" },
-    ],
+    type: "animation",
+    help: "Cómo aparecen las secciones al hacer scroll.",
   },
   {
     name: "headline",
@@ -55,7 +51,7 @@ const STYLES: Record<string, TemplateStyle> = {
 const sample = (over: Partial<InvitationContent>): InvitationContent => ({
   sections: DEFAULT_SECTIONS.map((s) => ({ ...s })),
   fontKey: "romantica",
-  animationKey: "suave",
+  animationKey: "fade",
   headline: "David & Denisse",
   title: "Para ti",
   toName: "Denisse",
@@ -92,8 +88,8 @@ const templates: Record<string, TemplateDef> = {
     headline: "Ven a mi cumpleaños",
     title: "¡Estás invitado!",
     fontKey: "divertida",
-    // Animación más enérgica por defecto: el look festivo se luce con reveals dinámicos.
-    animationKey: "dinamica",
+    // Animación más enérgica por defecto: el look festivo se luce con "elevar".
+    animationKey: "rise",
     eventName: "Mi cumpleaños",
     eventDateLabel: "Sábado · 8:00 PM",
     locationLabel: "Salón Las Palmas",
