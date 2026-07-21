@@ -150,8 +150,10 @@ function Hero({
   }
 
   if (variant === "festive") {
-    // Hero festivo (cumpleaños): balloons flotando + 🎂 rebotando + brillos.
+    // Hero festivo (cumpleaños): foto de fondo (si hay) + balloons flotando +
+    // 🎂 rebotando + brillos. Sin foto usa el gradiente festivo como fallback.
     // Solo cumpleaños usa esta variante, así que las decoraciones no afectan a las demás.
+    const photo = content.photos[0];
     return (
       <header
         className="relative flex min-h-[85vh] flex-col items-center justify-center overflow-hidden px-6 py-16 text-center text-[var(--c-bg)]"
@@ -159,6 +161,24 @@ function Hero({
           backgroundImage: `radial-gradient(circle at 22% 28%, rgba(255,255,255,0.20), transparent 38%), radial-gradient(circle at 78% 72%, rgba(255,255,255,0.14), transparent 38%), linear-gradient(135deg, var(--c-accent), var(--c-accent-deep))`,
         }}
       >
+        {photo && (
+          <>
+            <img
+              data-parallax
+              src={photo}
+              alt=""
+              className="absolute inset-0 h-[120%] w-full object-cover"
+            />
+            {/* Velo con los colores de la paleta para que el texto y las decoraciones resalten. */}
+            <div
+              aria-hidden
+              className="absolute inset-0"
+              style={{
+                background: `linear-gradient(135deg, color-mix(in srgb, var(--c-accent) 72%, transparent), color-mix(in srgb, var(--c-accent-deep) 78%, transparent))`,
+              }}
+            />
+          </>
+        )}
         {/* Decoraciones (solo visuales, aria-hidden, sin pointer-events). */}
         <div aria-hidden className="pointer-events-none absolute inset-0 select-none">
           <span className="dd-anim-balloon absolute left-[6%] top-[18%] text-4xl sm:left-[12%] sm:top-[24%] sm:text-6xl">🎈</span>
