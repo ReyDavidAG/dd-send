@@ -134,6 +134,13 @@ function CompleteInvitation() {
   const palette = resolvePalette(def, content.paletteKey);
   return (
     <section aria-label="La invitación completa" className="relative z-10">
+      <div className="mx-auto max-w-2xl px-5 pb-8 pt-14 text-center">
+        <span className="inline-block rounded-full bg-lilac px-4 py-1 text-xs font-semibold uppercase tracking-widest text-coral-deep">
+          Ejemplo
+        </span>
+        <h2 className="mt-4 text-3xl font-bold sm:text-4xl">Así se ve una invitación completa</h2>
+        <p className="mt-2 text-ink/60">Un ejemplo real; recórrela para ver todas las secciones.</p>
+      </div>
       <InvitationView content={content} palette={palette} style={def.style} />
     </section>
   );
@@ -230,6 +237,7 @@ function Gallery({ templates }: { templates: TemplateCard[] }) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.55, delay: i * 0.08, ease: EASE }}
+            className="mx-auto w-full max-w-sm sm:max-w-none"
           >
             <Link
               href={`/create/${t.key}`}

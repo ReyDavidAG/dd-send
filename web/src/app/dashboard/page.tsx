@@ -97,6 +97,7 @@ export default async function DashboardPage() {
                         templateKey={inv.templates.key}
                         content={inv.content ?? undefined}
                         className="h-28"
+                        scale={0.3}
                       />
                     </div>
                   )}
