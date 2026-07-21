@@ -6,6 +6,7 @@ import { InvitationView } from "@/templates/InvitationView";
 import { createClient } from "@/lib/supabase/client";
 import { saveDraft } from "@/app/actions/invitations";
 import { PayButton } from "@/components/PayButton";
+import { FONTS } from "@/templates/fonts";
 import {
   SECTION_LABELS,
   type Field,
@@ -186,6 +187,34 @@ export function CreateEditor({
                     </button>
                   ))}
                 </div>
+              ) : f.type === "font" ? (
+                <div className="flex flex-wrap gap-2">
+                  {FONTS.map((ft) => (
+                    <button
+                      key={ft.key}
+                      type="button"
+                      onClick={() => set("fontKey", ft.key)}
+                      style={{ fontFamily: ft.head }}
+                      className={`rounded-full border px-3 py-1.5 text-base transition ${
+                        content.fontKey === ft.key ? "border-coral ring-2 ring-coral/30" : "border-line"
+                      }`}
+                    >
+                      {ft.name}
+                    </button>
+                  ))}
+                </div>
+              ) : f.type === "select" ? (
+                <select
+                  value={content[f.name] as string}
+                  onChange={(e) => set(f.name, e.target.value)}
+                  className="w-full rounded-xl border border-line px-3 py-2 outline-none focus:border-coral"
+                >
+                  {f.options?.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
               ) : f.type === "photos" ? (
                 <PhotosField value={content.photos} userId={userId} onChange={(urls) => set("photos", urls)} />
               ) : (
@@ -249,6 +278,9 @@ function SectionsEditor({
   sections: SectionConfig[];
   onChange: (s: SectionConfig[]) => void;
 }) {
+  const dragFrom = useRef<number | null>(null);
+  const [over, setOver] = useState<number | null>(null);
+
   const move = (i: number, dir: -1 | 1) => {
     const j = i + dir;
     if (j < 0 || j >= sections.length) return;
@@ -258,14 +290,40 @@ function SectionsEditor({
   };
   const toggle = (i: number) =>
     onChange(sections.map((s, k) => (k === i ? { ...s, visible: !s.visible } : s)));
+  const drop = (to: number) => {
+    const from = dragFrom.current;
+    dragFrom.current = null;
+    setOver(null);
+    if (from === null || from === to) return;
+    const arr = [...sections];
+    const [it] = arr.splice(from, 1);
+    arr.splice(to, 0, it);
+    onChange(arr);
+  };
 
   return (
     <div className="rounded-xl border border-line p-3">
-      <p className="text-sm font-semibold">Secciones (muestra, oculta y reordena)</p>
+      <p className="text-sm font-semibold">Secciones</p>
+      <p className="text-xs text-ink/50">Arrastra para reordenar; marca para mostrar/ocultar.</p>
       <ul className="mt-2 space-y-1">
         {sections.map((s, i) => (
-          <li key={s.id} className="flex items-center justify-between gap-2 rounded-lg bg-sand px-3 py-2">
+          <li
+            key={s.id}
+            draggable
+            onDragStart={() => (dragFrom.current = i)}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setOver(i);
+            }}
+            onDrop={() => drop(i)}
+            className={`flex items-center justify-between gap-2 rounded-lg bg-sand px-3 py-2 ${
+              over === i ? "ring-2 ring-coral/40" : ""
+            }`}
+          >
             <label className="flex items-center gap-2 text-sm">
+              <span className="cursor-grab select-none text-ink/40" aria-hidden>
+                ⠿
+              </span>
               <input type="checkbox" checked={s.visible} onChange={() => toggle(i)} />
               {SECTION_LABELS[s.id]}
             </label>
