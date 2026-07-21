@@ -92,9 +92,13 @@ const templates: Record<string, TemplateDef> = {
     headline: "Cumpleaños de Andrés",
     title: "¡Estás invitado!",
     fontKey: "divertida",
+    // Animación más enérgica por defecto: el look festivo se luce con reveals dinámicos.
+    animationKey: "dinamica",
     eventName: "Mi cumpleaños",
-    eventDateLabel: "Sábado 8:00 PM",
+    eventDateLabel: "Sábado · 8:00 PM",
     locationLabel: "Salón Las Palmas",
+    signature: "¡Te esperamos! 🎉",
+    rsvpMessage: "¡Ahí estaré! 🎂",
     paletteKey: "fiesta",
   }),
   boda: def("boda", "Boda", {
