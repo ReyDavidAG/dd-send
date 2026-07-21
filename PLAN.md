@@ -1,7 +1,7 @@
 # PLAN — SaaS de invitaciones personalizadas
 
 > Bitácora viva del proyecto. Se actualiza en cada cambio relevante.
-> Última actualización: 2026-07-20 · Cumpleaños festivo.
+> Última actualización: 2026-07-20 · Home con animaciones scroll-driven (Motion).
 
 ## 1. Qué estamos construyendo
 
@@ -394,3 +394,17 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
   `rsvpMessage` "¡Ahí estaré! 🎂"). Sin nuevos campos ni deps. Editable
   completo desde el editor. Build + lint + smoke test OK en `/preview/cumpleanos`
   (cita/boda/blank sin regresión).
+- **2026-07-20** — **Home con animaciones scroll-driven (Motion)**. Nueva dep
+  `motion` (vía `npm i motion`, instalada solo en `/web`). Nuevo client
+  component `components/Landing.tsx` que recibe `templates + hasUser` del
+  `page.tsx` (server) y orquesta todo con Motion: hero con fade-up al montar
+  + parallax out por scroll (`useScroll + useTransform` sobre su ref);
+  pasos y tarjetas de plantillas con stagger reveal (`whileInView`); y debajo
+  de las plantillas, sección alta (220vh) con sticky hijo que **arrastra**
+  el `MiniPreview` (cumpleanos) — escala/opacidad/translateY ligados a
+  `scrollYProgress` para que aparezca "desde detrás" y se revierta al subir.
+  `<MotionConfig reducedMotion="user">` respeta a11y. **Diseño intacto**:
+  mismo markup y clases, solo se sustituyen las animaciones. Build + lint
+  + smoke test OK (`/` 200, 48 KB; marcadores `220vh`/`sticky top-0`/
+  `aria-label="Vista previa en vivo"` presentes; `/login /register
+  /preview/{cita,cumpleanos,boda}` sin regresión).
