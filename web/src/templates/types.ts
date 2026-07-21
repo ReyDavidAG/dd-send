@@ -24,8 +24,13 @@ export const DEFAULT_SECTIONS: SectionConfig[] = [
 
 // Contenido que el usuario llena y se guarda en invitations.content (jsonb).
 // Es un superset que cubre las 3 plantillas del MVP.
+export type AnimationKey = "suave" | "dinamica" | "ninguna";
+
 export type InvitationContent = {
   sections: SectionConfig[];
+  fontKey: string; // clave de FONTS
+  animationKey: AnimationKey;
+  headline: string; // texto grande del hero (editable; reemplaza el "&" fijo)
   toName: string;
   fromName: string;
   title: string;
@@ -58,10 +63,11 @@ export type Palette = {
 export type Field = {
   name: keyof InvitationContent;
   label: string;
-  type: "text" | "textarea" | "date" | "tel" | "photos" | "palette";
+  type: "text" | "textarea" | "date" | "tel" | "photos" | "palette" | "font" | "select";
   required?: boolean;
   placeholder?: string;
   help?: string;
+  options?: { value: string; label: string }[]; // para type 'select'
 };
 
 export type TemplateSchema = {
@@ -70,10 +76,9 @@ export type TemplateSchema = {
   defaults: InvitationContent;
 };
 
-// Estilo visual que distingue una plantilla de otra (tipografías + hero).
+// Estilo visual base de la plantilla (variante de hero). Las tipografías ahora
+// las elige el usuario (content.fontKey).
 export type TemplateStyle = {
-  fontHead: string; // CSS font-family (usa las vars cargadas en el layout)
-  fontBody: string;
   hero: "photo" | "split" | "festive";
 };
 

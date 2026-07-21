@@ -4,16 +4,15 @@ import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-// Porta la lógica de GSAP ScrollTrigger de la referencia Astro a React.
-// Devuelve un ref para el contenedor; cualquier elemento con [data-reveal]
-// dentro de él se anima al entrar (fade + desplazamiento) y se REVIERTE al
-// salir del viewport (toggleActions play/reverse en ambas direcciones).
-// Personalizable por elemento con data-reveal-x / data-reveal-y (px).
-export function useScrollReveal(enabled = true) {
+// GSAP ScrollTrigger portado a React (como la referencia Astro):
+//  - [data-reveal]: fade + desplazamiento al entrar, se revierte al salir.
+//  - [data-parallax]: parallax con scrub ligado al scroll.
+// `intensity` escala el movimiento (suave < 1 < dinámica). enabled=false → nada.
+export function useScrollReveal(enabled = true, intensity = 1) {
   const scope = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!enabled) return; // vista previa del editor: sin animaciones
+    if (!enabled) return;
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     gsap.registerPlugin(ScrollTrigger);
 
@@ -21,8 +20,8 @@ export function useScrollReveal(enabled = true) {
       gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
         gsap.from(el, {
           opacity: 0,
-          x: Number(el.dataset.revealX ?? 0),
-          y: Number(el.dataset.revealY ?? 60),
+          x: Number(el.dataset.revealX ?? 0) * intensity,
+          y: Number(el.dataset.revealY ?? 60) * intensity,
           duration: 0.8,
           ease: "power2.out",
           scrollTrigger: {
@@ -33,10 +32,23 @@ export function useScrollReveal(enabled = true) {
           },
         });
       });
+
+      gsap.utils.toArray<HTMLElement>("[data-parallax]").forEach((el) => {
+        gsap.to(el, {
+          yPercent: 14 * intensity,
+          ease: "none",
+          scrollTrigger: {
+            trigger: el.parentElement ?? el,
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
+        });
+      });
     }, scope);
 
-    return () => ctx.revert(); // limpia triggers y estilos al desmontar
-  }, [enabled]);
+    return () => ctx.revert();
+  }, [enabled, intensity]);
 
   return scope;
 }

@@ -3,11 +3,15 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { useScrollReveal } from "./hooks/useScrollReveal";
+import { fontByKey } from "./fonts";
 import { DEFAULT_SECTIONS, type InvitationViewProps, type SectionId } from "./types";
 
 export function InvitationView({ content, palette, style, animate = true }: InvitationViewProps) {
-  const scope = useScrollReveal(animate);
+  const anim = content.animationKey ?? "suave";
+  const on = animate && anim !== "ninguna";
+  const scope = useScrollReveal(on, anim === "dinamica" ? 1.4 : 0.8);
 
+  const font = fontByKey(content.fontKey);
   const vars = {
     "--c-bg": palette.bg,
     "--c-surface": palette.surface,
@@ -15,8 +19,8 @@ export function InvitationView({ content, palette, style, animate = true }: Invi
     "--c-accent": palette.accent,
     "--c-accent-deep": palette.accentDeep,
     "--c-band": palette.band,
-    "--c-fh": style.fontHead,
-    "--c-fb": style.fontBody,
+    "--c-fh": font.head,
+    "--c-fb": font.body,
     fontFamily: "var(--c-fb)",
   } as CSSProperties;
 
@@ -121,7 +125,7 @@ function Hero({
   variant: "photo" | "split" | "festive";
   head: string;
 }) {
-  const names = `${content.fromName} & ${content.toName}`;
+  const names = content.headline || `${content.fromName} & ${content.toName}`;
 
   if (variant === "split") {
     return (
@@ -164,7 +168,12 @@ function Hero({
   return (
     <header className="relative flex h-[85vh] items-center justify-center overflow-hidden text-center">
       {content.photos[0] && (
-        <img src={content.photos[0]} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <img
+          data-parallax
+          src={content.photos[0]}
+          alt=""
+          className="absolute inset-0 h-[120%] w-full object-cover"
+        />
       )}
       <div className="absolute inset-0 bg-black/40" />
       <div className="relative px-6 text-white drop-shadow-lg">

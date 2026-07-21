@@ -12,6 +12,24 @@ import {
 // Campos editables comunes a las plantillas del MVP.
 const commonFields = (): Field[] => [
   { name: "paletteKey", label: "Paleta de colores", type: "palette" },
+  { name: "fontKey", label: "Tipografía", type: "font" },
+  {
+    name: "animationKey",
+    label: "Animaciones",
+    type: "select",
+    options: [
+      { value: "suave", label: "Suaves" },
+      { value: "dinamica", label: "Dinámicas" },
+      { value: "ninguna", label: "Sin animación" },
+    ],
+  },
+  {
+    name: "headline",
+    label: "Encabezado principal",
+    type: "text",
+    required: true,
+    help: 'Texto grande del inicio. Ej. "David & Denisse" o "Cumpleaños de Andrés".',
+  },
   { name: "title", label: "Título / lema", type: "text", required: true },
   { name: "toName", label: "Para (nombre)", type: "text", required: true },
   { name: "fromName", label: "De parte de", type: "text", required: true },
@@ -27,16 +45,18 @@ const commonFields = (): Field[] => [
   { name: "rsvpMessage", label: "Mensaje de confirmación", type: "text" },
 ];
 
-const SANS = "var(--font-geist-sans), system-ui, sans-serif";
 const STYLES: Record<string, TemplateStyle> = {
-  cita: { fontHead: "var(--font-script), cursive", fontBody: SANS, hero: "photo" },
-  cumpleanos: { fontHead: "var(--font-fun), sans-serif", fontBody: SANS, hero: "festive" },
-  boda: { fontHead: "var(--font-serif), serif", fontBody: "var(--font-serif), Georgia, serif", hero: "split" },
-  blank: { fontHead: SANS, fontBody: SANS, hero: "photo" },
+  cita: { hero: "photo" },
+  cumpleanos: { hero: "festive" },
+  boda: { hero: "split" },
+  blank: { hero: "photo" },
 };
 
 const sample = (over: Partial<InvitationContent>): InvitationContent => ({
   sections: DEFAULT_SECTIONS.map((s) => ({ ...s })),
+  fontKey: "romantica",
+  animationKey: "suave",
+  headline: "David & Denisse",
   title: "Para ti",
   toName: "Denisse",
   fromName: "David",
@@ -69,14 +89,18 @@ const def = (key: string, name: string, over: Partial<InvitationContent>): Templ
 const templates: Record<string, TemplateDef> = {
   cita: def("cita", "Cita romántica", { paletteKey: "rosa" }),
   cumpleanos: def("cumpleanos", "Cumpleaños", {
+    headline: "Cumpleaños de Andrés",
     title: "¡Estás invitado!",
+    fontKey: "divertida",
     eventName: "Mi cumpleaños",
     eventDateLabel: "Sábado 8:00 PM",
     locationLabel: "Salón Las Palmas",
     paletteKey: "fiesta",
   }),
   boda: def("boda", "Boda", {
-    title: "Nos casamos",
+    headline: "Nos casamos",
+    title: "Nuestra boda",
+    fontKey: "elegante",
     eventName: "Nuestra boda",
     eventDateLabel: "12 de diciembre · 5:00 PM",
     locationLabel: "Jardín El Encanto",
@@ -84,7 +108,9 @@ const templates: Record<string, TemplateDef> = {
     paletteKey: "arena",
   }),
   blank: def("blank", "En blanco", {
-    title: "Tu evento",
+    headline: "Tu evento",
+    title: "Invitación",
+    fontKey: "moderna",
     toName: "Invitado",
     fromName: "Tú",
     message: "Escribe aquí tu mensaje.",
