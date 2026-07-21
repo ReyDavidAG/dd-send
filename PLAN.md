@@ -1,7 +1,7 @@
 # PLAN — SaaS de invitaciones personalizadas
 
 > Bitácora viva del proyecto. Se actualiza en cada cambio relevante.
-> Última actualización: 2026-07-20 · Fase 0 (planeación).
+> Última actualización: 2026-07-20 · Cumpleaños festivo.
 
 ## 1. Qué estamos construyendo
 
@@ -384,3 +384,13 @@ NEXT_PUBLIC_SITE_URL=             # para back_urls y links de invitación
   y dashboard usan `MiniPreview`. Editor: al enfocar un campo, el preview
   (desktop) **se desliza a la sección** correspondiente; enlace "Cambiar
   plantilla". Build y smoke test OK (heroes distintos por plantilla verificados).
+- **2026-07-20** — **Cumpleaños más festivo**. Variante `festive` del hero
+  rediseñada: balloons (🎈) flotando a los lados, regalos (🎁) abajo, ✨⭐
+  brillando, 🎂 central con bounce, fondo con dos halos radiales sobre el
+  gradiente existente. 3 keyframes CSS puros nuevos
+  (`ddBalloon`/`ddBounce`/`ddTwinkle` + utilidades `.dd-anim-*`); respetan
+  `prefers-reduced-motion`. Registry: animationKey default `suave` →
+  `dinamica`, copy celebratorio (`signature` "¡Te esperamos! 🎉",
+  `rsvpMessage` "¡Ahí estaré! 🎂"). Sin nuevos campos ni deps. Editable
+  completo desde el editor. Build + lint + smoke test OK en `/preview/cumpleanos`
+  (cita/boda/blank sin regresión).
