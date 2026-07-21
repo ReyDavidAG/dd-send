@@ -111,9 +111,9 @@ export function CreateEditor({
     });
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex h-[100dvh] flex-col overflow-hidden">
       {/* Barra superior */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-white px-5 py-3">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-line bg-white px-5 py-3">
         <div className="flex items-center gap-2">
           <Link
             href="/dashboard"
@@ -155,7 +155,7 @@ export function CreateEditor({
       </div>
 
       {/* Tabs (solo móvil) */}
-      <div className="flex border-b border-line lg:hidden">
+      <div className="flex shrink-0 border-b border-line lg:hidden">
         {(["edit", "preview"] as const).map((t) => (
           <button
             key={t}
@@ -169,10 +169,10 @@ export function CreateEditor({
         ))}
       </div>
 
-      <div className="grid flex-1 lg:grid-cols-2">
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         {/* Formulario */}
         <div
-          className={`${tab === "edit" ? "block" : "hidden"} space-y-4 overflow-y-auto p-5 lg:block lg:max-h-[calc(100vh-57px)]`}
+          className={`${tab === "edit" ? "flex" : "hidden"} min-h-0 flex-1 flex-col space-y-4 overflow-y-auto p-5 lg:flex lg:w-1/2`}
         >
           {fields.map((f) => (
             <label
@@ -268,7 +268,7 @@ export function CreateEditor({
 
         {/* Vista previa */}
         <div
-          className={`${tab === "preview" ? "block" : "hidden"} relative bg-lilac/40 lg:block lg:max-h-[calc(100vh-57px)]`}
+          className={`${tab === "preview" ? "flex" : "hidden"} relative min-h-0 flex-1 bg-lilac/40 lg:flex lg:w-1/2`}
         >
           <button
             onClick={() => setFull(true)}
@@ -279,7 +279,7 @@ export function CreateEditor({
           <p className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/90 px-3 py-1 text-xs text-ink/60 shadow ring-1 ring-line backdrop-blur">
             Usa ↑↓ y 👁 sobre cada sección. «Pantalla completa» muestra las animaciones.
           </p>
-          <div ref={previewRef} className="h-[70vh] overflow-y-auto lg:h-[calc(100vh-57px)]">
+          <div ref={previewRef} className="min-h-0 w-full flex-1 overflow-y-auto">
             <InvitationView content={content} palette={palette} style={style} animate={false} edit={editControls} />
           </div>
         </div>
