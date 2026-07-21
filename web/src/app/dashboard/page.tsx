@@ -4,13 +4,17 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { MAX_DRAFTS } from "@/lib/limits";
 import { PayButton } from "@/components/PayButton";
 import { DeleteDraftButton } from "@/components/DeleteDraftButton";
+import { Navbar } from "@/components/Navbar";
+import { MiniPreview } from "@/components/MiniPreview";
+import { IconEdit, IconEye, IconPay, IconPlus } from "@/components/icons";
+import type { InvitationContent } from "@/templates/types";
 
 type Row = {
   id: string;
   slug: string;
   status: string;
   expires_at: string | null;
-  content: { title?: string } | null;
+  content: InvitationContent | null;
   templates: { key: string; name: string } | null;
 };
 
@@ -23,6 +27,9 @@ function badge(status: string, expiresAt: string | null) {
   if (status === "pending_payment") return { label: "Pago pendiente", cls: "bg-amber/25 text-ink" };
   return { label: "Borrador", cls: "bg-lilac text-coral-deep" };
 }
+
+const btnBase = "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition";
+const btnGhost = `${btnBase} border border-line hover:bg-sand`;
 
 export default async function DashboardPage() {
   const uid = await requireUserId();
@@ -40,34 +47,21 @@ export default async function DashboardPage() {
 
   return (
     <main className="flex-1">
-      <header className="flex items-center justify-between border-b border-line bg-white px-5 py-4 sm:px-8">
-        <Link href="/" className="dd-text-gradient text-xl font-extrabold">
-          DD-Send
-        </Link>
-        <div className="flex items-center gap-4 text-sm">
-          <span className="hidden text-ink/60 sm:inline">{user?.email}</span>
-          <a href="/auth/logout" className="font-semibold text-coral-deep">
-            Cerrar sesión
-          </a>
-        </div>
-      </header>
+      <Navbar user={user} />
 
       <section className="mx-auto max-w-4xl px-5 py-12">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold sm:text-3xl">Mis invitaciones</h1>
           {atLimit ? (
             <span
-              className="cursor-not-allowed rounded-full bg-ink/10 px-5 py-2.5 text-sm font-semibold text-ink/50"
+              className={`${btnBase} cursor-not-allowed bg-ink/10 text-ink/50`}
               title={`Máximo ${MAX_DRAFTS} borradores. Elimina uno para crear otro.`}
             >
-              + Nueva
+              <IconPlus className="h-4 w-4" /> Nueva
             </span>
           ) : (
-            <Link
-              href="/create"
-              className="rounded-full bg-coral px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-coral-deep"
-            >
-              + Nueva
+            <Link href="/create" className={`${btnBase} bg-coral text-white hover:bg-coral-deep`}>
+              <IconPlus className="h-4 w-4" /> Nueva
             </Link>
           )}
         </div>
