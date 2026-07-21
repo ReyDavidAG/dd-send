@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { InvitationView } from "@/templates/InvitationView";
 import { createClient } from "@/lib/supabase/client";
 import { saveDraft } from "@/app/actions/invitations";
@@ -12,13 +12,33 @@ import {
   type InvitationContent,
   type Palette,
   type SectionConfig,
+  type SectionId,
+  type TemplateStyle,
 } from "@/templates/types";
+
+// A qué sección lleva el scroll del preview al enfocar cada campo.
+const FIELD_SECTION: Partial<Record<keyof InvitationContent, SectionId>> = {
+  title: "message",
+  toName: "hero",
+  fromName: "hero",
+  message: "message",
+  signature: "message",
+  eventName: "details",
+  eventDateLabel: "details",
+  eventDate: "countdown",
+  locationLabel: "details",
+  locationLink: "details",
+  photos: "photos",
+  rsvpWhatsapp: "rsvp",
+  rsvpMessage: "rsvp",
+};
 
 type Props = {
   templateKey: string;
   templateName: string;
   fields: Field[];
   palettes: Palette[];
+  style: TemplateStyle;
   initial: InvitationContent;
   initialId?: string;
   userId: string;
@@ -29,10 +49,21 @@ export function CreateEditor({
   templateName,
   fields,
   palettes,
+  style,
   initial,
   initialId,
   userId,
 }: Props) {
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  // Desktop: al enfocar un campo, desliza el preview hasta su sección.
+  const scrollToSection = (section?: SectionId) => {
+    if (!section || !window.matchMedia("(min-width:1024px)").matches) return;
+    const c = previewRef.current;
+    const el = c?.querySelector(`#sec-${section}`) as HTMLElement | null;
+    if (!c || !el) return;
+    c.scrollTo({ top: c.scrollTop + (el.getBoundingClientRect().top - c.getBoundingClientRect().top), behavior: "smooth" });
+  };
   const [content, setContent] = useState<InvitationContent>(initial);
   const [draftId, setDraftId] = useState<string | undefined>(initialId);
   const [saved, setSaved] = useState(false);
@@ -62,9 +93,14 @@ export function CreateEditor({
     <div className="flex flex-1 flex-col">
       {/* Barra superior */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-white px-5 py-3">
-        <Link href="/dashboard" className="text-sm text-ink/60 hover:text-ink">
-          ← Salir
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard" className="text-sm text-ink/60 hover:text-ink">
+            ← Salir
+          </Link>
+          <Link href="/create" className="text-sm text-ink/60 hover:text-ink">
+            Cambiar plantilla
+          </Link>
+        </div>
         <span className="order-last w-full truncate text-center text-sm font-semibold sm:order-none sm:w-auto">
           {templateName}
         </span>
@@ -117,7 +153,11 @@ export function CreateEditor({
           />
 
           {fields.map((f) => (
-            <label key={f.name} className="block space-y-1">
+            <label
+              key={f.name}
+              className="block space-y-1"
+              onFocus={() => scrollToSection(FIELD_SECTION[f.name])}
+            >
               <span className="text-sm font-medium">
                 {f.label}
                 {f.required && <span className="text-coral"> *</span>}
@@ -181,8 +221,8 @@ export function CreateEditor({
           >
             ⛶ Pantalla completa
           </button>
-          <div className="h-[70vh] overflow-y-auto lg:h-[calc(100vh-57px)]">
-            <InvitationView content={content} palette={palette} animate={false} />
+          <div ref={previewRef} className="h-[70vh] overflow-y-auto lg:h-[calc(100vh-57px)]">
+            <InvitationView content={content} palette={palette} style={style} animate={false} />
           </div>
         </div>
       </div>
@@ -195,7 +235,7 @@ export function CreateEditor({
           >
             ✕ Cerrar
           </button>
-          <InvitationView content={content} palette={palette} animate={false} />
+          <InvitationView content={content} palette={palette} style={style} animate={false} />
         </div>
       )}
     </div>

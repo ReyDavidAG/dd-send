@@ -50,6 +50,7 @@ export default async function CreatePage({
         templateName={tpl?.name ?? def.key}
         fields={def.schema.fields}
         palettes={def.schema.palettes}
+        style={def.style}
         initial={initial}
         initialId={draftId}
         userId={user.id}
