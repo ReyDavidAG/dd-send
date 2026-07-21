@@ -43,7 +43,7 @@ export default function RootLayout({
       {/* Extensiones (p. ej. ColorZilla → cz-shortcut-listen) inyectan atributos
           en <body> antes de hidratar; suppressHydrationWarning silencia ese
           falso positivo sin afectar el resto del árbol. */}
-      <body suppressHydrationWarning className="min-h-full flex flex-col">
+      <body suppressHydrationWarning className="flex min-h-full flex-col overflow-x-clip">
         {children}
       </body>
     </html>
