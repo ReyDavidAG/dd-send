@@ -66,49 +66,6 @@ body {
   }
 }
 
-/* Micro-animaciones festivas (cumpleaños): flotar, rebotar, brillar. */
-@keyframes ddBalloon {
-  0%,
-  100% {
-    transform: translateY(0) rotate(-3deg);
-  }
-  50% {
-    transform: translateY(-12px) rotate(3deg);
-  }
-}
-@keyframes ddBounce {
-  0%,
-  100% {
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    transform: translateY(-6px) scale(1.04);
-  }
-}
-@keyframes ddTwinkle {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: scale(0.9);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.15);
-  }
-}
-.dd-anim-balloon {
-  animation: ddBalloon 3s ease-in-out infinite;
-}
-.dd-anim-balloon-d {
-  animation: ddBalloon 4s ease-in-out -1s infinite;
-}
-.dd-anim-bounce {
-  animation: ddBounce 2s ease-in-out infinite;
-}
-.dd-anim-twinkle {
-  animation: ddTwinkle 1.8s ease-in-out infinite;
-}
-
 .dd-fade-up {
   animation: ddFadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -119,11 +76,7 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .dd-fade-up,
   .dd-fade-in,
-  .dd-gradient-animated,
-  .dd-anim-balloon,
-  .dd-anim-balloon-d,
-  .dd-anim-bounce,
-  .dd-anim-twinkle {
+  .dd-gradient-animated {
     animation: none;
   }
 }

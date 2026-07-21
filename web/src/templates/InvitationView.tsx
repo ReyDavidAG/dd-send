@@ -1,10 +1,11 @@
 "use client";
 
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { useScrollReveal } from "./hooks/useScrollReveal";
 import { fontByKey } from "./fonts";
-import { DEFAULT_SECTIONS, type InvitationViewProps, type SectionId } from "./types";
+import { ConfettiOverlay } from "./ConfettiOverlay";
+import { DEFAULT_SECTIONS, type InvitationViewProps, type Palette, type SectionId } from "./types";
 
 export function InvitationView({ content, palette, style, animate = true }: InvitationViewProps) {
   const anim = content.animationKey ?? "suave";
@@ -30,7 +31,7 @@ export function InvitationView({ content, palette, style, animate = true }: Invi
   const render = (id: SectionId) => {
     switch (id) {
       case "hero":
-        return <Hero content={content} variant={style.hero} head={head} />;
+        return <Hero content={content} variant={style.hero} head={head} palette={palette} animated={on} />;
       case "message":
         return (
           <section className="px-6 py-20 sm:py-28">
@@ -120,12 +121,21 @@ function Hero({
   content,
   variant,
   head,
+  palette,
+  animated,
 }: {
   content: InvitationViewProps["content"];
   variant: "photo" | "split" | "festive";
   head: string;
+  palette: Palette;
+  animated: boolean;
 }) {
   const names = content.headline || `${content.fromName} & ${content.toName}`;
+  // Colores del confetti (hero festivo): la paleta + dorado y blanco de fiesta.
+  const confettiColors = useMemo(
+    () => [palette.accent, palette.accentDeep, palette.surface, "#FFD84D", "#FFFFFF"],
+    [palette.accent, palette.accentDeep, palette.surface],
+  );
 
   if (variant === "split") {
     return (
@@ -150,9 +160,9 @@ function Hero({
   }
 
   if (variant === "festive") {
-    // Hero festivo (cumpleaños): foto de fondo (si hay) + balloons flotando +
-    // 🎂 rebotando + brillos. Sin foto usa el gradiente festivo como fallback.
-    // Solo cumpleaños usa esta variante, así que las decoraciones no afectan a las demás.
+    // Hero festivo (cumpleaños): foto de fondo (si hay) con velo de la paleta +
+    // confetti animado en canvas (sin emojis). Sin foto usa el gradiente festivo.
+    // Solo cumpleaños usa esta variante, así que no afecta a las demás.
     const photo = content.photos[0];
     return (
       <header
@@ -169,7 +179,7 @@ function Hero({
               alt=""
               className="absolute inset-0 h-[120%] w-full object-cover"
             />
-            {/* Velo con los colores de la paleta para que el texto y las decoraciones resalten. */}
+            {/* Velo con los colores de la paleta para que el texto resalte. */}
             <div
               aria-hidden
               className="absolute inset-0"
@@ -179,19 +189,11 @@ function Hero({
             />
           </>
         )}
-        {/* Decoraciones (solo visuales, aria-hidden, sin pointer-events). */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 select-none">
-          <span className="dd-anim-balloon absolute left-[6%] top-[18%] text-4xl sm:left-[12%] sm:top-[24%] sm:text-6xl">🎈</span>
-          <span className="dd-anim-balloon-d absolute right-[6%] top-[22%] text-4xl sm:right-[12%] sm:top-[18%] sm:text-6xl">🎈</span>
-          <span className="dd-anim-balloon-d absolute bottom-[16%] left-[8%] hidden text-3xl sm:block sm:text-5xl">🎁</span>
-          <span className="dd-anim-balloon absolute bottom-[22%] right-[10%] hidden text-3xl sm:block sm:text-5xl">🎁</span>
-          <span className="dd-anim-twinkle absolute left-1/2 top-[8%] -translate-x-1/2 text-xl sm:text-2xl">✨</span>
-          <span className="dd-anim-twinkle absolute left-[18%] bottom-[28%] hidden text-lg sm:block">⭐</span>
-          <span className="dd-anim-twinkle absolute right-[20%] bottom-[30%] hidden text-lg sm:block">⭐</span>
+        {animated && <ConfettiOverlay colors={confettiColors} />}
+        <div className="relative z-10">
+          <p className="text-sm uppercase tracking-[0.35em]">{content.title}</p>
+          <h1 className={`${head} mt-3 text-5xl sm:text-7xl`}>{names}</h1>
         </div>
-        <div className="dd-anim-bounce text-6xl sm:text-7xl" aria-hidden>🎂</div>
-        <p className="mt-6 text-sm uppercase tracking-[0.35em]">{content.title}</p>
-        <h1 className={`${head} mt-3 text-5xl sm:text-7xl`}>{names}</h1>
       </header>
     );
   }

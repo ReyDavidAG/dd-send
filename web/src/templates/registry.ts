@@ -89,7 +89,7 @@ const def = (key: string, name: string, over: Partial<InvitationContent>): Templ
 const templates: Record<string, TemplateDef> = {
   cita: def("cita", "Cita romántica", { paletteKey: "rosa" }),
   cumpleanos: def("cumpleanos", "Cumpleaños", {
-    headline: "Cumpleaños de Andrés",
+    headline: "Ven a mi cumpleaños",
     title: "¡Estás invitado!",
     fontKey: "divertida",
     // Animación más enérgica por defecto: el look festivo se luce con reveals dinámicos.
