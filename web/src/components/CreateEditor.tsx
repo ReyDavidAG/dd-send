@@ -22,6 +22,12 @@ import {
   type TemplateStyle,
 } from "@/templates/types";
 
+// Tope de tamaño por foto. Debe coincidir con `experimental.serverActions.bodySizeLimit`
+// en next.config.ts (10 MB). Sirve para avisar al usuario antes de mandar un request
+// que sabemos que va a fallar con 413.
+const MAX_UPLOAD_MB = 10;
+const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
+
 // A qué sección lleva el scroll del preview al enfocar cada campo.
 const FIELD_SECTION: Partial<Record<keyof InvitationContent, SectionId>> = {
   title: "message",
@@ -397,6 +403,14 @@ function PhotosField({
     setErr(null);
     const added: string[] = [];
     for (const f of files) {
+      // Filtra fotos que reventarían el límite de Server Actions (ver
+      // next.config.ts → experimental.serverActions.bodySizeLimit).
+      // Sin este guard, el server devuelve 413 y el cliente muestra el
+      // error genérico "Server Components render".
+      if (f.size > MAX_UPLOAD_BYTES) {
+        setErr(`"${f.name}" pesa ${(f.size / 1024 / 1024).toFixed(1)} MB; el máximo por foto es ${MAX_UPLOAD_MB} MB.`);
+        continue;
+      }
       try {
         const fd = new FormData();
         fd.append("file", f);
