@@ -70,34 +70,58 @@ export async function POST(request: Request) {
   let prefId = "";
   let initPoint = "";
   try {
-    const pref = await mpPreference().create({
-      body: {
-        items: [
-          {
-            id: inv.template_id,
-            title: `Invitación · ${tpl.name}`,
-            quantity: 1,
-            unit_price: price / 100,
-            currency_id: tpl.currency,
-          },
-        ],
-        external_reference: inv.id,
-        back_urls: {
-          success: `${site}/checkout/success?invitation_id=${inv.id}`,
-          failure: `${site}/checkout/failure?invitation_id=${inv.id}`,
-          pending: `${site}/checkout/pending?invitation_id=${inv.id}`,
+    // Log: qué le mandamos a MP. No incluye secretos. Útil para diagnosticar
+    // rechazos ("Algo salió mal" en la UI de MP = MP rechazó la preference).
+    const mpBody = {
+      items: [
+        {
+          id: inv.template_id,
+          title: `Invitación · ${tpl.name}`,
+          quantity: 1,
+          unit_price: price / 100,
+          currency_id: tpl.currency,
         },
-        auto_return: "approved",
-        notification_url: `${site}/api/webhooks/mercadopago`,
+      ],
+      external_reference: inv.id,
+      back_urls: {
+        success: `${site}/checkout/success?invitation_id=${inv.id}`,
+        failure: `${site}/checkout/failure?invitation_id=${inv.id}`,
+        pending: `${site}/checkout/pending?invitation_id=${inv.id}`,
       },
-    });
+      auto_return: "approved",
+      notification_url: `${site}/api/webhooks/mercadopago`,
+    };
+    console.log(
+      "[checkout] creating MP preference. site=",
+      site,
+      " invitationId=",
+      inv.id,
+      " price=",
+      price,
+      " body=",
+      JSON.stringify(mpBody),
+    );
+
+    const pref = await mpPreference().create({ body: mpBody });
     prefId = pref.id ?? "";
     initPoint = pref.init_point ?? "";
     if (!prefId || !initPoint) {
       throw new Error("MP returned empty preference id or init_point");
     }
-  } catch (e) {
-    console.error("[checkout] MP preference failed:", e);
+    console.log("[checkout] MP preference OK. prefId=", prefId);
+  } catch (e: unknown) {
+    // El SDK hace `throw await response.json()` ante no-2xx, así que `e` es
+    // el JSON crudo que devolvió MP. Lo serializamos entero para diagnóstico.
+    const errPayload =
+      e instanceof Error
+        ? { message: e.message, stack: e.stack, raw: e }
+        : e;
+    console.error(
+      "[checkout] MP preference failed. site=",
+      site,
+      " payload=",
+      JSON.stringify(errPayload),
+    );
     return NextResponse.json(
       { error: "No se pudo iniciar el pago. Intenta de nuevo." },
       { status: 502 },
