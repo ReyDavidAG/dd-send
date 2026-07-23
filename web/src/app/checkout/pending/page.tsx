@@ -30,17 +30,9 @@ export default async function CheckoutPendingPage({
           dashboard; actualizaremos el estado automáticamente.
         </p>
         <div className="mt-6 flex justify-center gap-2">
-          {invitationId && (
-            <Link
-              href={`/checkout/success?invitation_id=${invitationId}`}
-              className="rounded-full bg-coral px-5 py-2.5 text-sm font-semibold text-white hover:bg-coral-deep"
-            >
-              Verificar ahora
-            </Link>
-          )}
           <Link
             href="/dashboard"
-            className="rounded-full border border-line px-4 py-2.5 text-sm font-semibold hover:bg-sand"
+            className="rounded-full bg-coral px-5 py-2.5 text-sm font-semibold text-white hover:bg-coral-deep"
           >
             Ir al dashboard
           </Link>
