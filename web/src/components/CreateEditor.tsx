@@ -53,6 +53,9 @@ type Props = {
   style: TemplateStyle;
   initial: InvitationContent;
   initialId?: string;
+  // Si el usuario está creando un NUEVO borrador y ya tiene el máximo,
+  // mostramos un banner persistente arriba del formulario.
+  draftLimitWarning?: { count: number; max: number } | null;
 };
 
 export function CreateEditor({
@@ -63,6 +66,7 @@ export function CreateEditor({
   style,
   initial,
   initialId,
+  draftLimitWarning,
 }: Props) {
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -180,6 +184,21 @@ export function CreateEditor({
         <div
           className={`${tab === "edit" ? "flex" : "hidden"} min-h-0 flex-1 flex-col space-y-4 overflow-y-auto p-5 lg:flex lg:w-1/2`}
         >
+          {draftLimitWarning && (
+            <div className="rounded-xl border border-amber/40 bg-amber/15 p-3 text-sm text-ink">
+              <p className="font-semibold">
+                Ya tienes {draftLimitWarning.count} borradores (máximo {draftLimitWarning.max}).
+              </p>
+              <p className="mt-1 text-ink/70">
+                Puedes llenar el formulario, pero <strong>Guardar no funcionará</strong> hasta que
+                elimines uno en{" "}
+                <Link href="/dashboard" className="font-semibold text-coral-deep underline">
+                  Mis invitaciones
+                </Link>
+                .
+              </p>
+            </div>
+          )}
           {fields.map((f) => (
             <label
               key={f.name}
