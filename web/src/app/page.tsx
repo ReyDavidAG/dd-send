@@ -1,5 +1,6 @@
 import { getSessionUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { VERSION } from "@/lib/version";
 import { Landing, type TemplateCard } from "@/components/Landing";
 import { Navbar } from "@/components/Navbar";
 
@@ -27,6 +28,7 @@ export default async function Home() {
 
       <footer className="border-t border-line px-5 py-10 text-center text-sm text-ink/50">
         DD-Send · Hecho con 💕
+        <span className="ml-2 align-baseline text-[10px] text-ink/40">v{VERSION}</span>
       </footer>
     </main>
   );
