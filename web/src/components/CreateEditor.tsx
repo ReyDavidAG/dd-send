@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { motion } from "motion/react";
+import { motion, useMotionValue, useTransform } from "motion/react";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { InvitationView } from "@/templates/InvitationView";
 import { saveDraft } from "@/app/actions/invitations";
@@ -10,7 +10,7 @@ import { uploadPhoto, deletePhoto, listPhotos } from "@/app/actions/photos";
 import { MAX_LIBRARY, MAX_SELECTED } from "@/lib/limits";
 import { PhoneInput } from "@/components/PhoneInput";
 import { DateTimeField } from "@/components/DateTimeField";
-import { IconArrowLeft, IconLayout, IconTrash } from "@/components/icons";
+import { IconArrowLeft, IconLayout, IconTrash, IconCheck, IconPay } from "@/components/icons";
 import { PayButton } from "@/components/PayButton";
 import { FONTS } from "@/templates/fonts";
 import { ANIMATION_LIST, demoAnimate, normalizeAnim } from "@/templates/animations";
@@ -82,9 +82,39 @@ export function CreateEditor({
   const [draftId, setDraftId] = useState<string | undefined>(initialId);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"edit" | "preview">("edit");
   const [full, setFull] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  // ── Carrusel Editar / Vista previa (solo móvil) ──
+  // Usamos SCROLL NATIVO con scroll-snap: el swipe horizontal lo maneja el
+  // navegador (fluido y 1:1 con el dedo) y cada panel scrollea vertical por su
+  // cuenta. El indicador del tab sigue el scrollLeft en vivo (useTransform),
+  // así va a la par del desliz. En pantallas grandes (lg) no hay scroll: ambos
+  // paneles lado a lado.
+  const areaRef = useRef<HTMLDivElement>(null);
+  const [pageW, setPageW] = useState(1);
+  const [page, setPage] = useState(0); // 0 = editar, 1 = vista previa
+  const sx = useMotionValue(0); // scrollLeft del carrusel
+  const indicatorX = useTransform(sx, [0, pageW], ["0%", "100%"]);
+
+  // Ancho de una "página" = ancho visible del área de paneles.
+  useEffect(() => {
+    const el = areaRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setPageW(el.clientWidth || 1));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const onScroll = () => {
+    const el = areaRef.current;
+    if (!el) return;
+    sx.set(el.scrollLeft);
+    setPage(Math.round(el.scrollLeft / (el.clientWidth || 1)));
+  };
+
+  const goTo = (p: number) =>
+    areaRef.current?.scrollTo({ left: p * (areaRef.current.clientWidth || 0), behavior: "smooth" });
 
   const palette = palettes.find((p) => p.key === content.paletteKey) ?? palettes[0];
   const set = (name: keyof InvitationContent, value: unknown) =>
@@ -123,67 +153,90 @@ export function CreateEditor({
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden">
       {/* Barra superior */}
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-line bg-white px-5 py-3">
-        <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2 border-b border-line bg-white px-3 py-2 sm:px-5 sm:py-3">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-semibold hover:bg-sand"
+            aria-label="Salir"
+            className="inline-flex items-center gap-1.5 rounded-full border border-line p-2 text-sm font-semibold hover:bg-sand sm:px-3 sm:py-1.5"
           >
-            <IconArrowLeft className="h-4 w-4" /> Salir
+            <IconArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Salir</span>
           </Link>
           <Link
             href="/create"
-            className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-semibold hover:bg-sand"
+            aria-label="Cambiar plantilla"
+            className="inline-flex items-center gap-1.5 rounded-full border border-line p-2 text-sm font-semibold hover:bg-sand sm:px-3 sm:py-1.5"
           >
-            <IconLayout className="h-4 w-4" /> Cambiar plantilla
+            <IconLayout className="h-4 w-4" />
+            <span className="hidden sm:inline">Cambiar plantilla</span>
           </Link>
         </div>
-        <span className="order-last w-full truncate text-center text-sm font-semibold sm:order-none sm:w-auto">
+
+        <span className="hidden min-w-0 flex-1 truncate text-center text-sm font-semibold sm:block">
           {templateName}
         </span>
-        <div className="flex items-center gap-2">
-          {saved && !pending && <span className="text-sm text-green-600">✓ Guardado</span>}
+
+        <div className="ml-auto flex items-center gap-1.5 sm:ml-0 sm:gap-2">
+          {saved && !pending && (
+            <span className="inline-flex items-center gap-1 text-sm font-semibold text-green-600">
+              <IconCheck className="h-4 w-4" />
+              <span className="hidden sm:inline">Guardado</span>
+            </span>
+          )}
           <button
             onClick={onSave}
             disabled={pending}
-            className="inline-flex items-center gap-2 rounded-full bg-coral px-5 py-2 text-sm font-semibold text-white transition hover:bg-coral-deep disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-full bg-coral px-3 py-2 text-sm font-semibold text-white transition hover:bg-coral-deep disabled:opacity-60 sm:px-5"
           >
             {pending && (
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
             )}
-            {pending ? "Guardando…" : draftId ? "Guardar" : "Guardar borrador"}
+            <span className="sm:hidden">{pending ? "…" : "Guardar"}</span>
+            <span className="hidden sm:inline">
+              {pending ? "Guardando…" : draftId ? "Guardar" : "Guardar borrador"}
+            </span>
           </button>
           {draftId && (
             <PayButton
               invitationId={draftId}
-              className="rounded-full border border-coral px-5 py-2 text-sm font-semibold text-coral-deep transition hover:bg-lilac disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-full border border-coral px-3 py-2 text-sm font-semibold text-coral-deep transition hover:bg-lilac disabled:opacity-60 sm:px-5"
             >
-              Pagar y publicar
+              <IconPay className="h-4 w-4 sm:hidden" />
+              <span className="sm:hidden">Pagar</span>
+              <span className="hidden sm:inline">Pagar y publicar</span>
             </PayButton>
           )}
         </div>
       </div>
 
-      {/* Tabs (solo móvil) */}
-      <div className="flex shrink-0 border-b border-line lg:hidden">
-        {(["edit", "preview"] as const).map((t) => (
+      {/* Tabs (solo móvil): subrayado; el indicador va a la par del desliz. */}
+      <div className="relative flex shrink-0 border-b border-line bg-white lg:hidden">
+        {(["Editar", "Vista previa"] as const).map((label, i) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`flex-1 py-3 text-sm font-semibold transition ${
-              tab === t ? "border-b-2 border-coral text-coral-deep" : "text-ink/50"
+            key={label}
+            onClick={() => goTo(i)}
+            aria-pressed={page === i}
+            className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+              page === i ? "text-coral-deep" : "text-ink/50"
             }`}
           >
-            {t === "edit" ? "Editar" : "Vista previa"}
+            {label}
           </button>
         ))}
+        <motion.span
+          style={{ x: indicatorX }}
+          className="pointer-events-none absolute bottom-0 left-0 h-0.5 w-1/2 bg-coral"
+        />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+      <div
+        ref={areaRef}
+        onScroll={onScroll}
+        className="dd-hide-scrollbar flex min-h-0 flex-1 snap-x snap-mandatory overflow-x-auto overflow-y-hidden lg:snap-none lg:overflow-x-hidden"
+      >
         {/* Formulario */}
-        <div
-          className={`${tab === "edit" ? "flex" : "hidden"} min-h-0 flex-1 flex-col space-y-4 overflow-y-auto p-5 lg:flex lg:w-1/2`}
-        >
+        <div className="flex h-full min-h-0 w-full shrink-0 snap-start flex-col space-y-4 overflow-y-auto p-5 lg:w-1/2">
           {draftLimitWarning && (
             <div className="rounded-xl border border-amber/40 bg-amber/15 p-3 text-sm text-ink">
               <p className="font-semibold">
@@ -292,18 +345,19 @@ export function CreateEditor({
         </div>
 
         {/* Vista previa */}
-        <div
-          className={`${tab === "preview" ? "flex" : "hidden"} relative min-h-0 flex-1 bg-lilac/40 lg:flex lg:w-1/2`}
-        >
-          <button
-            onClick={() => setFull(true)}
-            className="absolute left-3 top-3 z-40 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold shadow ring-1 ring-line backdrop-blur"
-          >
-            ⛶ Pantalla completa
-          </button>
-          <p className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full bg-white/90 px-3 py-1 text-xs text-ink/60 shadow ring-1 ring-line backdrop-blur">
-            Usa ↑↓ y 👁 sobre cada sección. «Pantalla completa» muestra las animaciones.
-          </p>
+        <div className="relative flex h-full min-h-0 w-full shrink-0 snap-start bg-lilac/40 lg:w-1/2">
+            <button
+              onClick={() => setFull(true)}
+              className="absolute left-3 top-3 z-40 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold shadow ring-1 ring-line backdrop-blur"
+            >
+              ⛶ Pantalla completa
+            </button>
+            <p className="pointer-events-none absolute bottom-3 left-1/2 z-10 max-w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-full bg-white/90 px-3 py-1 text-center text-[11px] leading-tight text-ink/60 shadow ring-1 ring-line backdrop-blur">
+              <span className="sm:hidden">Ordena u oculta cada sección con ↑ ↓ 👁</span>
+              <span className="hidden sm:inline">
+                Usa ↑↓ y 👁 sobre cada sección. «Pantalla completa» muestra las animaciones.
+              </span>
+            </p>
           <div ref={previewRef} className="min-h-0 w-full flex-1 overflow-y-auto">
             <InvitationView content={content} palette={palette} style={style} animate={false} edit={editControls} />
           </div>

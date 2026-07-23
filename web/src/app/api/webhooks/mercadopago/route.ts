@@ -22,6 +22,16 @@ export async function POST(request: Request) {
   const dataId = url.searchParams.get("data.id") ?? url.searchParams.get("id") ?? "";
   const type = url.searchParams.get("type") ?? url.searchParams.get("topic");
 
+  // Solo nos interesan notificaciones de PAGO. Las `merchant_order` (y demás)
+  // no traen datos útiles y MP las firma con OTRA plantilla, así que verificar
+  // su HMAC daba 401 → MP reintentaba en loop llenando los logs. Las ignoramos
+  // con 200 ANTES de tocar la firma. La verificación queda solo para `payment`,
+  // que es donde importa.
+  if (type !== "payment") {
+    console.log("[webhook] ignored non-payment notification:", { dataId, type });
+    return NextResponse.json({ ok: true });
+  }
+
   const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
   const xSignature = request.headers.get("x-signature") ?? "";
   const xRequestId = request.headers.get("x-request-id") ?? "";
@@ -94,10 +104,6 @@ export async function POST(request: Request) {
       ua: request.headers.get("user-agent"),
     });
   }
-
-  // Solo nos interesan notificaciones de pago. Las merchant_order legacy
-  // salen por aquí sin hacer nada.
-  if (type !== "payment") return NextResponse.json({ ok: true });
 
   // Traemos el pago desde MP (necesitamos su estado real y external_reference).
   const payment = await mpPayment().get({ id: dataId });

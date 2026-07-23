@@ -6,12 +6,7 @@ import { Navbar } from "@/components/Navbar";
 // Pantalla a la que MP redirige cuando el pago queda pendiente (ej. pago en
 // efectivo, transferencia bancaria). El webhook eventualmente activará la
 // invitación cuando MP confirme.
-export default async function CheckoutPendingPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ invitation_id?: string }>;
-}) {
-  const { invitation_id: invitationId } = await searchParams;
+export default async function CheckoutPendingPage() {
   const user = await getSessionUser();
   await requireUserId();
 
@@ -19,7 +14,9 @@ export default async function CheckoutPendingPage({
     <main className="flex-1">
       <Navbar user={user} />
       <section className="mx-auto max-w-xl px-5 py-16 text-center">
-        <div className="text-5xl">⏳</div>
+        <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-amber/20 text-4xl">
+          ⏳
+        </div>
         <h1 className="mt-4 text-2xl font-bold">Pago pendiente de confirmación</h1>
         <p className="mt-2 text-ink/60">
           Tu pago quedó registrado pero Mercado Pago aún no lo confirma

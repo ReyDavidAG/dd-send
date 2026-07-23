@@ -50,3 +50,6 @@ export const IconChevronLeft = ({ className }: P) => (
 export const IconChevronRight = ({ className }: P) => (
   <svg {...base(className)}><path d="M9 18l6-6-6-6" /></svg>
 );
+export const IconLock = ({ className }: P) => (
+  <svg {...base(className)}><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+);
