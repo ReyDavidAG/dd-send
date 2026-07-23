@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { PAYMENTS_ENABLED } from "@/lib/pricing";
+import * as AlertDialog from "@radix-ui/react-alert-dialog";
+import { PAYMENTS_ENABLED, offerPriceCents, mxn } from "@/lib/pricing";
+import { IconLock } from "@/components/icons";
 
-// Mensajes de error por código HTTP. Cada caso tiene una explicación clara y
-// una acción sugerida para que el usuario sepa qué hacer.
+// Mensajes de error por código HTTP: qué pasó + qué hacer.
 const errorMessages: Record<number, string> = {
   400: "Faltan datos para iniciar el pago.",
   401: "Tu sesión expiró. Vuelve a iniciar sesión para pagar.",
@@ -14,33 +15,44 @@ const errorMessages: Record<number, string> = {
   502: "Mercado Pago no respondió. Intenta de nuevo en unos segundos.",
 };
 
+const MP_BLUE = "#009ee3"; // azul de marca de Mercado Pago (alusión)
+
+// Marca "Mercado Pago" para dejar claro al usuario quién procesa el pago.
+function MercadoPagoMark({ className = "" }: { className?: string }) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 font-semibold ${className}`} style={{ color: MP_BLUE }}>
+      <span
+        className="grid h-4 w-4 place-items-center rounded-full text-[10px] text-white"
+        style={{ background: MP_BLUE }}
+      >
+        $
+      </span>
+      Mercado&nbsp;Pago
+    </span>
+  );
+}
+
 export function PayButton({
   invitationId,
   className,
   children,
+  basePriceCents = 0, // con la oferta de lanzamiento el precio es plano; ver pricing.ts
 }: {
   invitationId: string;
   className?: string;
   children: React.ReactNode;
+  basePriceCents?: number;
 }) {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [toast, setToast] = useState(false);
 
-  async function pay() {
-    // Pagos aún sin configurar: mostramos "Próximamente" y no iniciamos checkout.
-    if (!PAYMENTS_ENABLED) {
-      setToast(true);
-      setTimeout(() => setToast(false), 2600);
-      return;
-    }
+  const priceLabel = mxn(offerPriceCents(basePriceCents));
 
-    // Prevenir doble click mientras se redirige. El usuario puede volver si
-    // falla, pero mientras loading es true, no se reenvía el request.
-    if (loading) return;
+  async function pay() {
+    if (loading) return; // evita doble submit
     setLoading(true);
     setErr(null);
-
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
