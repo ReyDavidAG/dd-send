@@ -63,7 +63,7 @@ export function PayButton({
       if (!res.ok || !data.url) {
         throw new Error(errorMessages[res.status] ?? data.error ?? "No se pudo iniciar el pago.");
       }
-      // Redirigir. NO resetear loading: el usuario ya no verá este botón.
+      // Redirige a Mercado Pago. No reseteamos loading: la página se va a ir.
       window.location.href = data.url;
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Error de red. Revisa tu conexión.");
@@ -71,31 +71,96 @@ export function PayButton({
     }
   }
 
-  return (
-    <>
-      <button onClick={pay} disabled={loading} className={className}>
-        {loading ? (
-          <span className="inline-flex items-center gap-2">
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-            Redirigiendo a pago…
-          </span>
-        ) : (
-          children
+  // Pagos aún sin configurar: toast "Próximamente", sin diálogo ni checkout.
+  if (!PAYMENTS_ENABLED) {
+    return (
+      <>
+        <button
+          onClick={() => {
+            setToast(true);
+            setTimeout(() => setToast(false), 2600);
+          }}
+          className={className}
+        >
+          {children}
+        </button>
+        {toast && (
+          <div className="fixed inset-x-0 bottom-6 z-[60] flex justify-center px-4">
+            <span className="rounded-full bg-ink px-5 py-3 text-sm font-semibold text-sand shadow-xl">
+              🚧 Pronto podrás pagar con Mercado Pago
+            </span>
+          </div>
         )}
-      </button>
-      {err && (
-        <div className="mt-2 flex items-start gap-2 text-xs text-coral-deep">
-          <span>⚠️</span>
-          <span>{err}</span>
-        </div>
-      )}
-      {toast && (
-        <div className="fixed inset-x-0 bottom-6 z-[60] flex justify-center px-4">
-          <span className="rounded-full bg-ink px-5 py-3 text-sm font-semibold text-sand shadow-xl">
-            🚧 Pagos próximamente
-          </span>
-        </div>
-      )}
-    </>
+      </>
+    );
+  }
+
+  return (
+    <AlertDialog.Root>
+      <AlertDialog.Trigger className={className}>{children}</AlertDialog.Trigger>
+
+      <AlertDialog.Portal>
+        <AlertDialog.Overlay className="dd-overlay fixed inset-0 z-50 bg-ink/40 backdrop-blur-sm" />
+        <AlertDialog.Content className="dd-content fixed left-1/2 top-1/2 z-50 w-[min(92vw,28rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-white shadow-2xl">
+          <div className="p-6">
+            <AlertDialog.Title className="text-lg font-bold">Publicar tu invitación</AlertDialog.Title>
+            <AlertDialog.Description className="mt-1 text-sm text-ink/60">
+              Un solo pago y tu invitación queda activa para compartir.
+            </AlertDialog.Description>
+
+            {/* Resumen de precio */}
+            <div className="mt-4 flex items-baseline justify-between rounded-xl bg-lilac/50 px-4 py-3">
+              <span className="text-sm font-medium text-ink/70">Total a pagar</span>
+              <span className="text-2xl font-extrabold text-coral-deep">{priceLabel}</span>
+            </div>
+
+            {/* Nota de pago seguro + marca MP */}
+            <div className="mt-3 flex items-start gap-2 text-xs text-ink/60">
+              <IconLock className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+              <p>
+                Pago seguro procesado por <MercadoPagoMark className="text-xs" />. Aceptas tarjeta,
+                débito o efectivo. No guardamos los datos de tu tarjeta.
+              </p>
+            </div>
+
+            {err && (
+              <div className="mt-3 flex items-start gap-2 rounded-lg bg-coral/10 px-3 py-2 text-xs text-coral-deep">
+                <span>⚠️</span>
+                <span>{err} Puedes intentar de nuevo.</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-end gap-2 border-t border-line bg-sand/50 px-6 py-4">
+            <AlertDialog.Cancel
+              disabled={loading}
+              className="rounded-full border border-line px-4 py-2 text-sm font-semibold hover:bg-white disabled:opacity-60"
+            >
+              Ahora no
+            </AlertDialog.Cancel>
+            <AlertDialog.Action
+              onClick={(e) => {
+                e.preventDefault(); // que corra el fetch antes de cerrar
+                void pay();
+              }}
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-95 disabled:opacity-70"
+              style={{ background: MP_BLUE }}
+            >
+              {loading ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                  Redirigiendo a Mercado Pago…
+                </>
+              ) : (
+                <>
+                  <IconLock className="h-4 w-4" /> Continuar a Mercado Pago
+                </>
+              )}
+            </AlertDialog.Action>
+          </div>
+        </AlertDialog.Content>
+      </AlertDialog.Portal>
+    </AlertDialog.Root>
   );
 }
