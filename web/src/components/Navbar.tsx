@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { UserMenu } from "@/components/UserMenu";
+import { VERSION } from "@/lib/version";
 
 export type NavUser = { name?: string | null; email?: string | null; picture?: string | null } | null;
 
@@ -10,6 +11,7 @@ export function Navbar({ user }: { user: NavUser }) {
     <header className="sticky top-0 z-30 flex items-center justify-between border-b border-line bg-sand/80 px-5 py-3 backdrop-blur sm:px-8">
       <Link href="/" className="dd-text-gradient text-xl font-extrabold">
         DD-Send
+        <span className="ml-1.5 align-baseline text-[10px] font-medium text-ink/40">v{VERSION}</span>
       </Link>
       {user ? (
         <UserMenu name={user.name} email={user.email} picture={user.picture} />
