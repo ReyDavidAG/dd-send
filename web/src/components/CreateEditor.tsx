@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { motion } from "motion/react";
+import { motion, useMotionValue, useTransform } from "motion/react";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { InvitationView } from "@/templates/InvitationView";
 import { saveDraft } from "@/app/actions/invitations";
@@ -10,7 +10,7 @@ import { uploadPhoto, deletePhoto, listPhotos } from "@/app/actions/photos";
 import { MAX_LIBRARY, MAX_SELECTED } from "@/lib/limits";
 import { PhoneInput } from "@/components/PhoneInput";
 import { DateTimeField } from "@/components/DateTimeField";
-import { IconArrowLeft, IconLayout, IconTrash } from "@/components/icons";
+import { IconArrowLeft, IconLayout, IconTrash, IconCheck, IconPay } from "@/components/icons";
 import { PayButton } from "@/components/PayButton";
 import { FONTS } from "@/templates/fonts";
 import { ANIMATION_LIST, demoAnimate, normalizeAnim } from "@/templates/animations";
