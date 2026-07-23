@@ -5,41 +5,73 @@ import { mpPayment } from "@/lib/mercadopago";
 
 // Webhook de Mercado Pago: verifica firma y activa la invitación al aprobarse.
 //
-// Idempotencia: MP puede enviar el mismo webhook múltiples veces (retry
-// ante error de red, reintentos automáticos). Cada activación debe ocurrir
-// UNA SOLA VEZ por invitación. Para eso:
+// MP puede enviar notificaciones en dos formatos:
+//   - NUEVO (webhooks firmados): URL `?data.id=...&type=payment`,
+//     headers `x-signature` + `x-request-id`. Verificamos HMAC-SHA256.
+//   - LEGACY (IPN viejo): URL `?id=...&topic=merchant_order` SIN headers de
+//     firma. MP sigue mandándolas junto con las nuevas; las aceptamos sin
+//     verificar firma, pero solo las usamos para ignorar (no traen datos de
+//     pago, solo de orden). Los pagos reales llegan por el formato nuevo.
+//
+// Idempotencia (sigue aplicando):
 //   - mp_payment_id es único (índice 0006). Si ya existe, no duplicamos.
 //   - La activación solo ocurre si la invitación NO está ya `active`.
-//   - El payment solo se actualiza si está `pending` (no sobreescribimos un
-//     estado terminal con uno transitorio de un webhook tardío).
+//   - El payment solo se actualiza si está `pending`.
 export async function POST(request: Request) {
   const url = new URL(request.url);
   const dataId = url.searchParams.get("data.id") ?? url.searchParams.get("id") ?? "";
   const type = url.searchParams.get("type") ?? url.searchParams.get("topic");
 
-  // ── Verificación de firma (x-signature: "ts=...,v1=...") ──
   const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
   const xSignature = request.headers.get("x-signature") ?? "";
   const xRequestId = request.headers.get("x-request-id") ?? "";
-  const parts = Object.fromEntries(
-    xSignature.split(",").map((p) => p.split("=").map((s) => s.trim()) as [string, string]),
+  const hasSignature = xSignature.includes("ts=") && xSignature.includes("v1=");
+
+  // Log de entrada: ayuda a ver qué nos manda MP y por qué rechaza.
+  console.log(
+    "[webhook] incoming. dataId=",
+    dataId,
+    " type=",
+    type,
+    " hasSignature=",
+    hasSignature,
+    " secret_set=",
+    !!secret,
   );
-  const ts = parts.ts;
-  const v1 = parts.v1;
 
-  if (!secret || !ts || !v1 || !dataId) {
-    return NextResponse.json({ error: "unverified" }, { status: 401 });
-  }
-  const manifest = `id:${dataId.toLowerCase()};request-id:${xRequestId};ts:${ts};`;
-  const expected = crypto.createHmac("sha256", secret).update(manifest).digest("hex");
-  if (
-    expected.length !== v1.length ||
-    !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(v1))
-  ) {
-    return NextResponse.json({ error: "invalid signature" }, { status: 401 });
+  // ── Verificación de firma: solo si el header viene presente ──
+  // Si NO viene firma, asumimos formato legacy (IPN) — aceptamos y dejamos
+  // pasar; las legacy no traen info útil de pago y serán ignoradas más abajo.
+  if (hasSignature) {
+    const parts = Object.fromEntries(
+      xSignature.split(",").map((p) => p.split("=").map((s) => s.trim()) as [string, string]),
+    );
+    const ts = parts.ts;
+    const v1 = parts.v1;
+
+    if (!secret || !ts || !v1 || !dataId) {
+      return NextResponse.json({ error: "unverified" }, { status: 401 });
+    }
+    const manifest = `id:${dataId.toLowerCase()};request-id:${xRequestId};ts:${ts};`;
+    const expected = crypto.createHmac("sha256", secret).update(manifest).digest("hex");
+    if (
+      expected.length !== v1.length ||
+      !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(v1))
+    ) {
+      return NextResponse.json({ error: "invalid signature" }, { status: 401 });
+    }
+  } else {
+    // Notificación legacy (sin firma). La aceptamos pero logueamos para
+    // saber que sigue llegando este formato.
+    console.log("[webhook] legacy notification (no x-signature):", {
+      dataId,
+      type,
+      ua: request.headers.get("user-agent"),
+    });
   }
 
-  // Solo nos interesan notificaciones de pago.
+  // Solo nos interesan notificaciones de pago. Las merchant_order legacy
+  // salen por aquí sin hacer nada.
   if (type !== "payment") return NextResponse.json({ ok: true });
 
   // Traemos el pago desde MP (necesitamos su estado real y external_reference).
