@@ -6,6 +6,8 @@ import { PayButton } from "@/components/PayButton";
 import { DeleteDraftButton } from "@/components/DeleteDraftButton";
 import { Navbar } from "@/components/Navbar";
 import { MiniPreview } from "@/components/MiniPreview";
+import { CopyLinkButton } from "@/components/CopyLinkButton";
+import { DashboardSuccessBanner } from "@/components/DashboardSuccessBanner";
 import { IconEdit, IconEye, IconPay, IconPlus } from "@/components/icons";
 import type { InvitationContent } from "@/templates/types";
 
@@ -31,9 +33,14 @@ function badge(status: string, expiresAt: string | null) {
 const btnBase = "inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition";
 const btnGhost = `${btnBase} border border-line hover:bg-sand`;
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ paid?: string; invitation_id?: string }>;
+}) {
   const uid = await requireUserId();
   const user = await getSessionUser();
+  const { paid, invitation_id: justPaidId } = await searchParams;
 
   const admin = createAdminClient();
   const { data } = await admin
@@ -44,6 +51,14 @@ export default async function DashboardPage() {
   const invitations = (data ?? []) as unknown as Row[];
   const draftCount = invitations.filter((i) => i.status === "draft").length;
   const atLimit = draftCount >= MAX_DRAFTS;
+
+  // Si volvimos de un pago aprobado (?paid=1), buscamos esa invitación para
+  // mostrar el banner. Si no la encontramos (raro pero posible), no mostramos
+  // nada para no confundir.
+  const justPaid = paid === "1" && justPaidId
+    ? invitations.find((i) => i.id === justPaidId)
+    : null;
+  const justPaidIsActive = justPaid?.status === "active";
 
   return (
     <main className="flex-1">
@@ -84,8 +99,11 @@ export default async function DashboardPage() {
             {invitations.map((inv) => {
               const b = badge(inv.status, inv.expires_at);
               const isActive = b.label === "Activa";
+              const isExpired = b.label === "Expirada";
+              const isPendingPayment = inv.status === "pending_payment";
               const editable = inv.status !== "active";
               const title = inv.content?.title || inv.templates?.name || "Invitación";
+              const publicUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/i/${inv.slug}`;
               return (
                 <li
                   key={inv.id}
@@ -116,11 +134,31 @@ export default async function DashboardPage() {
                       </Link>
                     )}
                     {isActive && (
-                      <Link href={`/i/${inv.slug}`} className={btnGhost}>
-                        <IconEye className="h-4 w-4" /> Ver
+                      <>
+                        <Link href={`/i/${inv.slug}`} target="_blank" className={btnGhost}>
+                          <IconEye className="h-4 w-4" /> Ver
+                        </Link>
+                        <CopyLinkButton
+                          url={publicUrl}
+                          label="📋 Copiar link"
+                          className={btnGhost}
+                        />
+                      </>
+                    )}
+                    {isExpired && (
+                      <span className="text-xs text-ink/50">
+                        La fecha del evento ya pasó.
+                      </span>
+                    )}
+                    {isPendingPayment && (
+                      <Link
+                        href={`/checkout/success?invitation_id=${inv.id}`}
+                        className={`${btnBase} border border-amber bg-amber/15 text-ink hover:bg-amber/25`}
+                      >
+                        ⏳ Verificar pago
                       </Link>
                     )}
-                    {editable && (
+                    {!isActive && (
                       <PayButton
                         invitationId={inv.id}
                         className={`${btnBase} bg-coral text-white hover:bg-coral-deep disabled:opacity-60`}
