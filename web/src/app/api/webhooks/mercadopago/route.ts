@@ -3,7 +3,15 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mpPayment } from "@/lib/mercadopago";
 
-// Webhook de Mercado Pago: verifica la firma y activa la invitación al aprobarse.
+// Webhook de Mercado Pago: verifica firma y activa la invitación al aprobarse.
+//
+// Idempotencia: MP puede enviar el mismo webhook múltiples veces (retry
+// ante error de red, reintentos automáticos). Cada activación debe ocurrir
+// UNA SOLA VEZ por invitación. Para eso:
+//   - mp_payment_id es único (índice 0006). Si ya existe, no duplicamos.
+//   - La activación solo ocurre si la invitación NO está ya `active`.
+//   - El payment solo se actualiza si está `pending` (no sobreescribimos un
+//     estado terminal con uno transitorio de un webhook tardío).
 export async function POST(request: Request) {
   const url = new URL(request.url);
   const dataId = url.searchParams.get("data.id") ?? url.searchParams.get("id") ?? "";
@@ -34,36 +42,107 @@ export async function POST(request: Request) {
   // Solo nos interesan notificaciones de pago.
   if (type !== "payment") return NextResponse.json({ ok: true });
 
+  // Traemos el pago desde MP (necesitamos su estado real y external_reference).
   const payment = await mpPayment().get({ id: dataId });
   const invitationId = payment.external_reference ?? undefined;
   const status = payment.status; // approved | rejected | pending | ...
-  if (!invitationId) return NextResponse.json({ ok: true });
+  const mapped =
+    status === "approved" ? "approved" : status === "rejected" ? "rejected" : "pending";
+
+  if (!invitationId) {
+    // Pago sin external_reference: algo está muy mal, pero no rompemos el
+    // webhook (MP espera 200/201 para no reintentar).
+    console.error("[webhook] payment without external_reference:", dataId);
+    return NextResponse.json({ ok: true });
+  }
 
   const admin = createAdminClient();
 
-  const mapped =
-    status === "approved" ? "approved" : status === "rejected" ? "rejected" : "pending";
-  await admin
+  // ¿Ya procesamos este mp_payment_id? Si sí, no hacemos nada (idempotencia).
+  const { data: existingByMpId } = await admin
     .from("payments")
-    .update({ mp_payment_id: String(payment.id), status: mapped, raw: payment as object })
-    .eq("invitation_id", invitationId)
-    .eq("status", "pending");
+    .select("id, status, invitation_id")
+    .eq("mp_payment_id", String(payment.id))
+    .maybeSingle();
 
-  if (status === "approved") {
-    // expires_at = fecha del evento (o ahora) + active_days_after de la plantilla.
-    const { data: inv } = await admin
+  if (existingByMpId) {
+    // Ya tenemos este pago procesado. Si por algo el status difiere (ej. el
+    // webhook tardío trae un refund que no teníamos), actualizamos el raw
+    // pero NO tocamos la invitación ya activa.
+    if (existingByMpId.status !== mapped) {
+      await admin
+        .from("payments")
+        .update({ status: mapped, raw: payment as object })
+        .eq("id", existingByMpId.id);
+    }
+    return NextResponse.json({ ok: true, dedup: true });
+  }
+
+  // Buscamos la fila de payment pendiente para esta invitación (la que creó
+  // /api/checkout). Si NO existe, es la race condition: el usuario pagó tan
+  // rápido que el webhook llegó antes que el insert del payment. En ese
+  // caso creamos la fila con la info de MP.
+  const { data: pendingRow } = await admin
+    .from("payments")
+    .select("id")
+    .eq("invitation_id", invitationId)
+    .eq("status", "pending")
+    .maybeSingle();
+
+  if (pendingRow) {
+    await admin
+      .from("payments")
+      .update({
+        mp_payment_id: String(payment.id),
+        status: mapped,
+        raw: payment as object,
+      })
+      .eq("id", pendingRow.id);
+  } else {
+    // Race: insertar la fila desde los datos de MP. No tenemos amount/currency
+    // locales aquí, así que los tomamos del pago mismo.
+    const { data: invRow } = await admin
       .from("invitations")
-      .select("event_date, templates(active_days_after)")
+      .select("user_id")
       .eq("id", invitationId)
       .single();
-    const days = (inv?.templates as unknown as { active_days_after?: number })?.active_days_after ?? 7;
-    const base = inv?.event_date ? new Date(inv.event_date).getTime() : Date.now();
-    const expiresAt = new Date(base + days * 86_400_000).toISOString();
+    await admin.from("payments").insert({
+      invitation_id: invitationId,
+      user_id: invRow?.user_id ?? "unknown",
+      provider: "mercadopago",
+      mp_preference_id: "",
+      mp_payment_id: String(payment.id),
+      amount: Math.round((payment.transaction_amount ?? 0) * 100),
+      currency: payment.currency_id ?? "MXN",
+      status: mapped,
+      raw: payment as object,
+    });
+  }
 
-    await admin
+  // Activar invitación SOLO si aún no está activa (idempotencia).
+  if (status === "approved") {
+    const { data: inv } = await admin
       .from("invitations")
-      .update({ status: "active", published_at: new Date().toISOString(), expires_at: expiresAt })
-      .eq("id", invitationId);
+      .select("status, event_date, templates(active_days_after)")
+      .eq("id", invitationId)
+      .single();
+
+    if (inv && inv.status !== "active") {
+      const days =
+        (inv.templates as unknown as { active_days_after?: number })?.active_days_after ?? 7;
+      const base = inv.event_date ? new Date(inv.event_date).getTime() : Date.now();
+      const expiresAt = new Date(base + days * 86_400_000).toISOString();
+
+      await admin
+        .from("invitations")
+        .update({
+          status: "active",
+          published_at: new Date().toISOString(),
+          expires_at: expiresAt,
+        })
+        .eq("id", invitationId)
+        .neq("status", "active"); // safety extra: nunca sobreescribir una activa
+    }
   }
 
   return NextResponse.json({ ok: true });
