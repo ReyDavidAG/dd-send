@@ -49,17 +49,42 @@ export async function POST(request: Request) {
     const ts = parts.ts;
     const v1 = parts.v1;
 
+    // Diagnóstico: log de cada paso del HMAC para identificar mismatches.
+    console.log(
+      "[webhook] signature check. dataId=", dataId,
+      " ts=", ts,
+      " v1_len=", v1?.length,
+      " xRequestId=", xRequestId,
+    );
+
     if (!secret || !ts || !v1 || !dataId) {
+      console.error(
+        "[webhook] signature check failed: missing field. secret?",
+        !!secret, "ts?", !!ts, "v1?", !!v1, "dataId?", !!dataId,
+      );
       return NextResponse.json({ error: "unverified" }, { status: 401 });
     }
     const manifest = `id:${dataId.toLowerCase()};request-id:${xRequestId};ts:${ts};`;
     const expected = crypto.createHmac("sha256", secret).update(manifest).digest("hex");
+    // NO logueamos el v1 ni el expected completos (pueden servir como token).
+    // Solo sus primeros 6 chars y longitud, suficiente para diagnosticar.
+    console.log(
+      "[webhook] hmac computed. expected_prefix=", expected.slice(0, 6),
+      " expected_len=", expected.length,
+      " v1_prefix=", v1.slice(0, 6),
+      " v1_len=", v1.length,
+      " secret_len=", secret.length,
+    );
     if (
       expected.length !== v1.length ||
       !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(v1))
     ) {
+      console.error(
+        "[webhook] HMAC mismatch. Check that MERCADOPAGO_WEBHOOK_SECRET in Vercel matches the Clave secreta in MP dashboard.",
+      );
       return NextResponse.json({ error: "invalid signature" }, { status: 401 });
     }
+    console.log("[webhook] signature OK.");
   } else {
     // Notificación legacy (sin firma). La aceptamos pero logueamos para
     // saber que sigue llegando este formato.
