@@ -49,12 +49,16 @@ export default async function DashboardPage({
     .eq("user_id", uid)
     .order("created_at", { ascending: false });
   const invitations = (data ?? []) as unknown as Row[];
-  const draftCount = invitations.filter((i) => i.status === "draft").length;
-  const atLimit = draftCount >= MAX_DRAFTS;
 
-  // Si volvimos de un pago aprobado (?paid=1), buscamos esa invitación para
-  // mostrar el banner. Si no la encontramos (raro pero posible), no mostramos
-  // nada para no confundir.
+  // Reglas para "+Nueva":
+  //  - límite de borradores (MAX_DRAFTS)
+  //  - solo 1 pago en proceso a la vez (no se puede crear otro hasta que se
+  //    pague o se elimine el pendiente). Evita preferencias huérfanas y
+  //    confusión del usuario.
+  const draftCount = invitations.filter((i) => i.status === "draft").length;
+  const hasPendingPayment = invitations.some((i) => i.status === "pending_payment");
+  const canCreateNew = draftCount < MAX_DRAFTS && !hasPendingPayment;
+
   const justPaid = paid === "1" && justPaidId
     ? invitations.find((i) => i.id === justPaidId)
     : null;
@@ -67,22 +71,28 @@ export default async function DashboardPage({
       <section className="mx-auto max-w-4xl px-5 py-12">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold sm:text-3xl">Mis invitaciones</h1>
-          {atLimit ? (
+          {canCreateNew ? (
+            <Link href="/create" className={`${btn} bg-coral text-white hover:bg-coral-deep`}>
+              <IconPlus className="h-4 w-4" /> Nueva
+            </Link>
+          ) : (
             <span
-              className={`${btnBase} cursor-not-allowed bg-ink/10 text-ink/50`}
-              title={`Máximo ${MAX_DRAFTS} borradores. Elimina uno para crear otro.`}
+              className={`${btn} cursor-not-allowed bg-ink/10 text-ink/50`}
+              title={
+                hasPendingPayment
+                  ? "Tienes un pago en proceso. Complétalo o elimínalo para crear otro."
+                  : `Máximo ${MAX_DRAFTS} borradores. Elimina uno para crear otro.`
+              }
             >
               <IconPlus className="h-4 w-4" /> Nueva
             </span>
-          ) : (
-            <Link href="/create" className={`${btnBase} bg-coral text-white hover:bg-coral-deep`}>
-              <IconPlus className="h-4 w-4" /> Nueva
-            </Link>
           )}
         </div>
-        {atLimit && (
+        {!canCreateNew && (
           <p className="mt-3 text-sm text-ink/60">
-            Llegaste al máximo de {MAX_DRAFTS} borradores. Elimina uno para crear otro.
+            {hasPendingPayment
+              ? "Tienes un pago en proceso. Complétalo o elimínalo para crear otro."
+              : `Llegaste al máximo de ${MAX_DRAFTS} borradores. Elimina uno para crear otro.`}
           </p>
         )}
 
