@@ -86,6 +86,16 @@ export default async function DashboardPage({
           </p>
         )}
 
+        {justPaid && justPaidIsActive && (
+          <div className="mt-6">
+            <DashboardSuccessBanner
+              invitationId={justPaid.id}
+              invitationSlug={justPaid.slug}
+              title={justPaid.content?.title || justPaid.templates?.name || "Invitación"}
+            />
+          </div>
+        )}
+
         {invitations.length === 0 ? (
           <p className="mt-16 text-center text-ink/60">
             Aún no tienes invitaciones.{" "}
