@@ -10,16 +10,24 @@ import { MiniPreview } from "@/components/MiniPreview";
 export default async function CreatePicker() {
   const uid = await requireUserId();
 
-  // Cuenta borradores actuales para avisar al usuario ANTES de que elija
-  // plantilla y descubra al guardar que ya no puede crear más.
+  // Cuenta borradores Y pagos pendientes. Bloqueamos "+Nueva" si:
+  //  - hay MAX_DRAFTS borradores, o
+  //  - hay un pago en proceso (no se puede crear otro hasta que se pague o
+  //    se elimine el pendiente).
   const admin = createAdminClient();
-  const { count } = await admin
+  const { count: draftCount } = await admin
     .from("invitations")
     .select("id", { count: "exact", head: true })
     .eq("user_id", uid)
     .eq("status", "draft");
-  const draftCount = count ?? 0;
-  const atLimit = draftCount >= MAX_DRAFTS;
+  const { count: pendingCount } = await admin
+    .from("invitations")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", uid)
+    .eq("status", "pending_payment");
+  const atDraftLimit = (draftCount ?? 0) >= MAX_DRAFTS;
+  const hasPendingPayment = (pendingCount ?? 0) > 0;
+  const blocked = atDraftLimit || hasPendingPayment;
 
   return (
     <main className="flex-1">
@@ -37,7 +45,19 @@ export default async function CreatePicker() {
         <h1 className="text-center text-3xl font-bold">Elige una plantilla</h1>
         <p className="mt-2 text-center text-ink/60">O empieza desde cero con una en blanco.</p>
 
-        {atLimit && (
+        {hasPendingPayment && (
+          <div className="mx-auto mt-6 max-w-2xl rounded-2xl border border-amber/40 bg-amber/15 p-4 text-sm text-ink">
+            <p className="font-semibold">Tienes un pago en proceso.</p>
+            <p className="mt-1 text-ink/70">
+              Completa o elimina ese pago desde{" "}
+              <Link href="/dashboard" className="font-semibold text-coral-deep underline">
+                Mis invitaciones
+              </Link>{" "}
+              antes de crear uno nuevo.
+            </p>
+          </div>
+        )}
+        {!hasPendingPayment && atDraftLimit && (
           <div className="mx-auto mt-6 max-w-2xl rounded-2xl border border-amber/40 bg-amber/15 p-4 text-sm text-ink">
             <p className="font-semibold">Llegaste al máximo de {MAX_DRAFTS} borradores.</p>
             <p className="mt-1 text-ink/70">
